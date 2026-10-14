@@ -1,0 +1,21 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="420dp"
+    android:height="12dp"
+    android:viewportWidth="420"
+    android:viewportHeight="12">
+    <path android:fillColor="@color/pole_white" android:pathData="M0,0 L420,0 L420,12 L0,12 Z" />
+    <path android:fillColor="@color/pole_red" android:pathData="M0,0 L16,0 L4,12 L-12,12 Z" />
+    <path android:fillColor="@color/pole_blue" android:pathData="M32,0 L48,0 L36,12 L20,12 Z" />
+    <path android:fillColor="@color/pole_red" android:pathData="M64,0 L80,0 L68,12 L52,12 Z" />
+    <path android:fillColor="@color/pole_blue" android:pathData="M96,0 L112,0 L100,12 L84,12 Z" />
+    <path android:fillColor="@color/pole_red" android:pathData="M128,0 L144,0 L132,12 L116,12 Z" />
+    <path android:fillColor="@color/pole_blue" android:pathData="M160,0 L176,0 L164,12 L148,12 Z" />
+    <path android:fillColor="@color/pole_red" android:pathData="M192,0 L208,0 L196,12 L180,12 Z" />
+    <path android:fillColor="@color/pole_blue" android:pathData="M224,0 L240,0 L228,12 L212,12 Z" />
+    <path android:fillColor="@color/pole_red" android:pathData="M256,0 L272,0 L260,12 L244,12 Z" />
+    <path android:fillColor="@color/pole_blue" android:pathData="M288,0 L304,0 L292,12 L276,12 Z" />
+    <path android:fillColor="@color/pole_red" android:pathData="M320,0 L336,0 L324,12 L308,12 Z" />
+    <path android:fillColor="@color/pole_blue" android:pathData="M352,0 L368,0 L356,12 L340,12 Z" />
+    <path android:fillColor="@color/pole_red" android:pathData="M384,0 L400,0 L388,12 L372,12 Z" />
+    <path android:fillColor="@color/pole_blue" android:pathData="M416,0 L432,0 L420,12 L404,12 Z" />
+</vector>

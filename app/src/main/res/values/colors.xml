@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Identidad: poste de barbería -->
+    <color name="ink_navy">#FF12233F</color>
+    <color name="ink_navy_light">#FF1B3560</color>
+    <color name="pole_red">#FFC23B32</color>
+    <color name="pole_blue">#FF2F5D9E</color>
+    <color name="pole_white">#FFF4F6FA</color>
+    <color name="header_text_muted">#FFB8C4D9</color>
+
+    <!-- Superficies y texto (cambian en modo oscuro) -->
+    <color name="bg">#FFEDF0F5</color>
+    <color name="surface">#FFFFFFFF</color>
+    <color name="text_primary">#FF14213A</color>
+    <color name="text_secondary">#FF5A667A</color>
+    <color name="outline">#FFC9D0DC</color>
+    <color name="brand_primary">#FF2F5D9E</color>
+    <color name="brand_on_primary">#FFFFFFFF</color>
+    <color name="nav_indicator">#FFDCE6F6</color>
+    <color name="on_nav_indicator">#FF12233F</color>
+    <color name="icon_chip">#FFE4ECF8</color>
+</resources>

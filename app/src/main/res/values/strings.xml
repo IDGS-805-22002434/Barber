@@ -1,0 +1,68 @@
+<resources>
+    <string name="app_name">BarberManager</string>
+
+    <!-- Login -->
+    <string name="login_tagline">Tu turno, sin esperas.</string>
+    <string name="login_title">Inicia sesión</string>
+    <string name="login_subtitle">Entra para agendar con tu barbero y ver tus citas.</string>
+    <string name="hint_email">Correo electrónico</string>
+    <string name="hint_password">Contraseña</string>
+    <string name="login_remember">Recordarme</string>
+    <string name="login_forgot">¿Olvidaste tu contraseña?</string>
+    <string name="login_button">Iniciar sesión</string>
+    <string name="login_or">o continúa con</string>
+    <string name="login_google">Continuar con Google</string>
+    <string name="login_no_account">¿Aún no tienes cuenta?</string>
+    <string name="login_register">Crear cuenta</string>
+
+    <string name="error_email_empty">Escribe tu correo electrónico.</string>
+    <string name="error_email_invalid">Revisa el formato, por ejemplo nombre@correo.com.</string>
+    <string name="error_password_empty">Escribe tu contraseña.</string>
+    <string name="error_password_short">La contraseña debe tener al menos %1$d caracteres.</string>
+
+    <string name="forgot_title">Recupera tu contraseña</string>
+    <string name="forgot_message">Escribe tu correo y te enviaremos un enlace para crear una contraseña nueva.</string>
+    <string name="forgot_send">Enviar enlace</string>
+    <string name="forgot_sent">Si el correo está registrado, recibirás un enlace en unos minutos.</string>
+    <string name="action_cancel">Cancelar</string>
+
+    <string name="msg_google_soon">El inicio con Google se conecta en el Sprint 1, junto con el backend.</string>
+    <string name="msg_register_soon">La pantalla de registro es el siguiente paso.</string>
+
+    <!-- Inicio -->
+    <string name="greeting_morning">Buenos días,</string>
+    <string name="greeting_afternoon">Buenas tardes,</string>
+    <string name="greeting_night">Buenas noches,</string>
+    <string name="default_user_name">cliente</string>
+    <string name="home_next_title">Tu próxima cita</string>
+    <string name="home_empty_title">Aún no tienes citas</string>
+    <string name="home_empty_desc">Reserva con tu barbero de confianza en menos de un minuto.</string>
+    <string name="home_book">Agendar cita</string>
+    <string name="home_quick_title">¿Qué necesitas hoy?</string>
+
+    <string name="qa_services">Servicios</string>
+    <string name="qa_services_desc">Precios y duración</string>
+    <string name="qa_barbers">Barberos</string>
+    <string name="qa_barbers_desc">Elige a tu favorito</string>
+    <string name="qa_appointments">Mis citas</string>
+    <string name="qa_appointments_desc">Cambia o cancela</string>
+    <string name="qa_promos">Promociones</string>
+    <string name="qa_promos_desc">Cupones vigentes</string>
+
+    <string name="promo_title">Tu primer corte con 15% de descuento</string>
+    <string name="promo_desc">Se aplicará automáticamente al agendar.</string>
+
+    <string name="nav_home">Inicio</string>
+    <string name="nav_appointments">Citas</string>
+    <string name="nav_promos">Promos</string>
+    <string name="nav_profile">Perfil</string>
+
+    <string name="msg_coming_sprint">Esta sección llega en el Sprint %1$d.</string>
+    <string name="msg_coming_soon">Esta sección llega pronto.</string>
+
+    <string name="logout_title">Cerrar sesión</string>
+    <string name="logout_message">¿Quieres salir de tu cuenta?</string>
+    <string name="logout_confirm">Cerrar sesión</string>
+    <string name="cd_logout">Cerrar sesión</string>
+    <string name="cd_password_toggle">Mostrar u ocultar contraseña</string>
+</resources>
