@@ -21,6 +21,17 @@ class SessionManager(context: Context) {
     val userEmail: String?
         get() = prefs.getString(KEY_EMAIL, null)
 
+    /**
+     * Modo administrador: habilita el CRUD del catálogo de servicios (RF02.03).
+     * Prototipo: se activa con un switch en Inicio; con backend se reemplaza
+     * por el rol real que devuelva el servidor.
+     */
+    var isAdmin: Boolean
+        get() = prefs.getBoolean(KEY_ADMIN, false)
+        set(value) {
+            prefs.edit().putBoolean(KEY_ADMIN, value).apply()
+        }
+
     fun saveSession(email: String) {
         prefs.edit()
             .putBoolean(KEY_LOGGED_IN, true)
@@ -36,5 +47,6 @@ class SessionManager(context: Context) {
         const val PREFS_NAME = "barbermanager_session"
         const val KEY_LOGGED_IN = "logged_in"
         const val KEY_EMAIL = "email"
+        const val KEY_ADMIN = "admin_mode"
     }
 }

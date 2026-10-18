@@ -65,4 +65,88 @@
     <string name="logout_confirm">Cerrar sesión</string>
     <string name="cd_logout">Cerrar sesión</string>
     <string name="cd_password_toggle">Mostrar u ocultar contraseña</string>
+    <string name="cd_back">Regresar</string>
+    <string name="cd_add_service">Agregar servicio</string>
+
+    <!-- Modo administrador -->
+    <string name="admin_mode_label">Modo administrador</string>
+    <string name="admin_mode_hint">Permite agregar, editar y desactivar servicios del catálogo.</string>
+    <string name="admin_badge">Admin</string>
+    <string name="admin_enabled">Modo administrador activado.</string>
+    <string name="admin_disabled">Modo administrador desactivado.</string>
+
+    <!-- Servicios (Sprint 1) -->
+    <string name="services_title">Servicios</string>
+    <string name="services_subtitle">Catálogo de la barbería</string>
+    <string name="services_search_hint">Buscar servicio…</string>
+    <string name="filter_all">Todos</string>
+    <string name="services_empty">Aún no hay servicios en el catálogo.</string>
+    <string name="services_empty_filtered">No encontramos servicios con esos filtros.</string>
+    <string name="services_summary_admin">%1$d servicios · %2$d desactivados</string>
+    <string name="services_summary_client">%1$d servicios disponibles</string>
+    <string name="service_inactive">Desactivado</string>
+    <string name="service_detail_hint">Toca un servicio para ver sus detalles.</string>
+    <string name="service_detail_close">Cerrar</string>
+    <string name="cd_sort">Cambiar orden</string>
+    <string name="sort_title">Ordenar por</string>
+    <string name="sort_name">Nombre (A-Z)</string>
+    <string name="sort_price_asc">Precio: menor a mayor</string>
+    <string name="sort_price_desc">Precio: mayor a menor</string>
+
+    <string name="cat_cuts">Cortes</string>
+    <string name="cat_beard">Barba</string>
+    <string name="cat_combos">Combos</string>
+    <string name="cat_brows">Cejas</string>
+    <string name="cat_color">Color</string>
+
+    <string name="service_form_new_title">Nuevo servicio</string>
+    <string name="service_form_edit_title">Editar servicio</string>
+    <string name="hint_service_name">Nombre del servicio</string>
+    <string name="hint_service_description">Descripción</string>
+    <string name="hint_service_price">Precio (ej. 120.50)</string>
+    <string name="hint_service_category">Categoría</string>
+    <string name="service_active_label">Servicio activo (visible para los clientes)</string>
+    <string name="service_save">Guardar servicio</string>
+    <string name="service_saved">Servicio guardado.</string>
+
+    <string name="error_service_name">Escribe el nombre del servicio.</string>
+    <string name="error_price_empty">Escribe el precio del servicio.</string>
+    <string name="error_price_invalid">Escribe un precio válido, por ejemplo 120.50.</string>
+
+    <!-- Barberos (Sprint 2) -->
+    <string name="barbers_title">Barberos</string>
+    <string name="barbers_subtitle">Nuestro equipo</string>
+    <string name="barbers_empty">Aún no hay barberos registrados.</string>
+    <string name="barber_form_new_title">Nuevo barbero</string>
+    <string name="barber_form_edit_title">Editar barbero</string>
+    <string name="hint_barber_name">Nombre completo</string>
+    <string name="hint_barber_years">Años de experiencia</string>
+    <string name="barber_specialties_label">Especialidades (selecciona una o varias)</string>
+    <string name="barber_active_label">Barbero activo (visible para los clientes)</string>
+    <string name="barber_save">Guardar barbero</string>
+    <string name="barber_saved">Barbero guardado.</string>
+    <string name="cd_add_barber">Agregar barbero</string>
+    <string name="error_barber_name">Escribe el nombre del barbero.</string>
+    <string name="error_barber_specialty">Selecciona al menos una especialidad del catálogo.</string>
+    <string name="error_years_invalid">Escribe un número de años válido (0 a 60).</string>
+
+    <!-- Especialidades (RF03.03) -->
+    <string name="specialties_title">Especialidades</string>
+    <string name="specialties_subtitle">Catálogo asignado a los barberos</string>
+    <string name="specialties_manage">Gestionar</string>
+    <string name="specialties_empty">Aún no hay especialidades registradas.</string>
+    <string name="cd_add_specialty">Agregar especialidad</string>
+    <string name="hint_specialty_name">Nombre de la especialidad</string>
+    <string name="specialty_active_label">Especialidad activa (asignable a barberos)</string>
+    <string name="specialty_save">Guardar</string>
+    <string name="specialty_saved">Especialidad guardada.</string>
+    <string name="specialty_dialog_new">Nueva especialidad</string>
+    <string name="specialty_dialog_edit">Editar especialidad</string>
+    <string name="error_specialty_name">Escribe el nombre de la especialidad.</string>
+    <string name="error_specialty_exists">Ya existe una especialidad con ese nombre.</string>
+
+    <plurals name="barber_years">
+        <item quantity="one">%1$d año de experiencia</item>
+        <item quantity="other">%1$d años de experiencia</item>
+    </plurals>
 </resources>

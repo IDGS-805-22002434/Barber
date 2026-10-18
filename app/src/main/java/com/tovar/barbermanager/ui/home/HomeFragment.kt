@@ -1,0 +1,174 @@
+package com.tovar.barbermanager.ui.home
+
+import android.content.Intent
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.GridLayout
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
+import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
+import com.tovar.barbermanager.R
+import com.tovar.barbermanager.data.SessionManager
+import com.tovar.barbermanager.databinding.FragmentHomeBinding
+import com.tovar.barbermanager.databinding.ItemQuickActionBinding
+import com.tovar.barbermanager.ui.login.LoginActivity
+import java.util.Calendar
+
+class HomeFragment : Fragment() {
+
+    private var _binding: FragmentHomeBinding? = null
+    private val binding get() = _binding!!
+    private lateinit var session: SessionManager
+
+    /** Acceso rápido a una sección; [sprint] indica en qué ciclo del plan se construye. */
+    private data class QuickAction(
+        @DrawableRes val icon: Int,
+        @StringRes val title: Int,
+        @StringRes val subtitle: Int,
+        val sprint: Int
+    )
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        state: Bundle?
+    ): View {
+        _binding = FragmentHomeBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        session = SessionManager(requireContext())
+
+        applyInsets()
+        bindGreeting()
+        setupQuickActions()
+        setupAdminSwitch()
+
+        binding.bookButton.setOnClickListener { showComingSprint(SPRINT_BOOKING) }
+        binding.logoutButton.setOnClickListener { confirmLogout() }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+
+    private fun applyInsets() {
+        val headerBaseTop = binding.homeHeader.paddingTop
+        ViewCompat.setOnApplyWindowInsetsListener(binding.fragmentHomeRoot) { root, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            binding.homeHeader.updatePadding(top = headerBaseTop + bars.top)
+            root.updatePadding(left = bars.left, right = bars.right)
+            insets
+        }
+    }
+
+    private fun bindGreeting() {
+        val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+        binding.greetingText.setText(
+            when {
+                hour < 12 -> R.string.greeting_morning
+                hour < 19 -> R.string.greeting_afternoon
+                else -> R.string.greeting_night
+            }
+        )
+        binding.nameText.text = displayName(
+            requireActivity().intent.getStringExtra(HomeActivity.EXTRA_EMAIL)
+        )
+    }
+
+    /** Nombre provisional a partir del correo; se reemplazará por el nombre real del perfil. */
+    private fun displayName(email: String?): String {
+        val raw = email?.substringBefore('@')?.split('.', '_', '-', '+')?.firstOrNull().orEmpty()
+        return if (raw.isBlank()) {
+            getString(R.string.default_user_name).replaceFirstChar { it.uppercase() }
+        } else {
+            raw.replaceFirstChar { it.uppercase() }
+        }
+    }
+
+    private fun setupQuickActions() {
+        val actions = listOf(
+            QuickAction(R.drawable.ic_scissors, R.string.qa_services, R.string.qa_services_desc, SPRINT_CATALOG),
+            QuickAction(R.drawable.ic_person, R.string.qa_barbers, R.string.qa_barbers_desc, SPRINT_BARBERS),
+            QuickAction(R.drawable.ic_calendar, R.string.qa_appointments, R.string.qa_appointments_desc, SPRINT_BOOKING),
+            QuickAction(R.drawable.ic_offer, R.string.qa_promos, R.string.qa_promos_desc, SPRINT_LOYALTY)
+        )
+        val margin = (6 * resources.displayMetrics.density).toInt()
+
+        actions.forEach { action ->
+            val item = ItemQuickActionBinding.inflate(layoutInflater, binding.quickActionsGrid, false)
+            item.actionIcon.setImageResource(action.icon)
+            item.actionTitle.setText(action.title)
+            item.actionSubtitle.setText(action.subtitle)
+            item.root.layoutParams = GridLayout.LayoutParams(
+                GridLayout.spec(GridLayout.UNDEFINED),
+                GridLayout.spec(GridLayout.UNDEFINED, 1f)
+            ).apply {
+                width = 0
+                height = ViewGroup.LayoutParams.WRAP_CONTENT
+                setMargins(margin, margin, margin, margin)
+            }
+            item.root.setOnClickListener { onQuickAction(action) }
+            binding.quickActionsGrid.addView(item.root)
+        }
+    }
+
+    private fun onQuickAction(action: QuickAction) {
+        when (action.sprint) {
+            SPRINT_CATALOG -> findNavController().navigate(R.id.action_home_to_services)
+            SPRINT_BARBERS -> findNavController().navigate(R.id.action_home_to_barbers)
+            else -> showComingSprint(action.sprint)
+        }
+    }
+
+    private fun setupAdminSwitch() {
+        binding.adminSwitch.isChecked = session.isAdmin
+        binding.adminSwitch.setOnCheckedChangeListener { _, checked ->
+            session.isAdmin = checked
+            showSnackbar(
+                getString(if (checked) R.string.admin_enabled else R.string.admin_disabled)
+            )
+        }
+    }
+
+    private fun showComingSprint(sprint: Int) {
+        showSnackbar(getString(R.string.msg_coming_sprint, sprint))
+    }
+
+    private fun showSnackbar(message: String) {
+        Snackbar.make(binding.root, message, Snackbar.LENGTH_SHORT).show()
+    }
+
+    private fun confirmLogout() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.logout_title)
+            .setMessage(R.string.logout_message)
+            .setNegativeButton(R.string.action_cancel, null)
+            .setPositiveButton(R.string.logout_confirm) { _, _ ->
+                session.clear()
+                val intent = Intent(requireContext(), LoginActivity::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                startActivity(intent)
+                requireActivity().finish()
+            }
+            .show()
+    }
+
+    private companion object {
+        const val SPRINT_CATALOG = 1
+        const val SPRINT_BARBERS = 2
+        const val SPRINT_BOOKING = 3
+        const val SPRINT_LOYALTY = 4
+    }
+}
