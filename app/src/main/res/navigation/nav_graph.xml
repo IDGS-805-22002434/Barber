@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.tovar.barbermanager.ui.home.HomeFragment"
+        android:label="@string/nav_home">
+
+        <action
+            android:id="@+id/action_home_to_services"
+            app:destination="@id/servicesFragment" />
+
+        <action
+            android:id="@+id/action_home_to_barbers"
+            app:destination="@id/barbersFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/servicesFragment"
+        android:name="com.tovar.barbermanager.ui.services.ServicesFragment"
+        android:label="@string/services_title">
+
+        <action
+            android:id="@+id/action_services_to_form"
+            app:destination="@id/serviceFormFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/serviceFormFragment"
+        android:name="com.tovar.barbermanager.ui.services.ServiceFormFragment"
+        android:label="@string/service_form_new_title">
+
+        <argument
+            android:name="serviceId"
+            app:argType="long"
+            android:defaultValue="0L" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/barbersFragment"
+        android:name="com.tovar.barbermanager.ui.barbers.BarbersFragment"
+        android:label="@string/barbers_title">
+
+        <action
+            android:id="@+id/action_barbers_to_form"
+            app:destination="@id/barberFormFragment" />
+
+        <action
+            android:id="@+id/action_barbers_to_specialties"
+            app:destination="@id/specialtiesFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/barberFormFragment"
+        android:name="com.tovar.barbermanager.ui.barbers.BarberFormFragment"
+        android:label="@string/barber_form_new_title">
+
+        <argument
+            android:name="barberId"
+            app:argType="long"
+            android:defaultValue="0L" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/specialtiesFragment"
+        android:name="com.tovar.barbermanager.ui.specialties.SpecialtiesFragment"
+        android:label="@string/specialties_title" />
+</navigation>
