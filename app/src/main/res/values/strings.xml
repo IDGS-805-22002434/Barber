@@ -21,13 +21,26 @@
     <string name="error_password_short">La contraseña debe tener al menos %1$d caracteres.</string>
 
     <string name="forgot_title">Recupera tu contraseña</string>
-    <string name="forgot_message">Escribe tu correo y te enviaremos un enlace para crear una contraseña nueva.</string>
+    <string name="forgot_message">La recuperación por correo requiere un servidor capaz de validar la cuenta y enviar un enlace seguro. Ese servicio aún no está configurado en esta versión local.</string>
     <string name="forgot_send">Enviar enlace</string>
     <string name="forgot_sent">Si el correo está registrado, recibirás un enlace en unos minutos.</string>
     <string name="action_cancel">Cancelar</string>
 
     <string name="msg_google_soon">El inicio con Google se conecta en el Sprint 1, junto con el backend.</string>
     <string name="msg_register_soon">La pantalla de registro es el siguiente paso.</string>
+    <string name="register_title">Crear cuenta de cliente</string>
+    <string name="register_message">Regístrate para consultar los servicios y administrar tus citas.</string>
+    <string name="register_name_hint">Nombre completo</string>
+    <string name="register_confirm_password_hint">Confirmar contraseña</string>
+    <string name="register_button">Crear cuenta</string>
+    <string name="register_success">Cuenta creada. Ya puedes iniciar sesión.</string>
+    <string name="error_register_name">Escribe tu nombre completo.</string>
+    <string name="error_password_mismatch">Las contraseñas no coinciden.</string>
+    <string name="error_email_exists">Ese correo ya está registrado.</string>
+    <string name="error_login_invalid">El correo o la contraseña son incorrectos.</string>
+    <string name="error_account_inactive">Esta cuenta está desactivada. Contacta al administrador.</string>
+    <string name="error_database">No fue posible completar la operación. Inténtalo de nuevo.</string>
+    <string name="forgot_backend_unavailable">La recuperación por correo aún requiere configurar un servicio de envío de enlaces.</string>
 
     <!-- Inicio -->
     <string name="greeting_morning">Buenos días,</string>
@@ -39,6 +52,54 @@
     <string name="home_empty_desc">Reserva con tu barbero de confianza en menos de un minuto.</string>
     <string name="home_book">Agendar cita</string>
     <string name="home_quick_title">¿Qué necesitas hoy?</string>
+    <string name="admin_dashboard_title">Panel de administración</string>
+    <string name="qa_services_admin_desc">Administrar catálogo y precios</string>
+    <string name="qa_barbers_admin_desc">Administrar barberos</string>
+    <string name="qa_specialties">Especialidades</string>
+    <string name="qa_specialties_desc">Asignar especialidades</string>
+    <string name="qa_manage_appointments">Citas</string>
+    <string name="qa_manage_appointments_desc">Consultar agenda</string>
+    <string name="qa_schedules">Horarios</string>
+    <string name="qa_schedules_desc">Configurar disponibilidad</string>
+
+    <!-- Administración de horarios -->
+    <string name="schedules_title">Horarios de barberos</string>
+    <string name="schedules_subtitle">Define el horario semanal y la duración de cada turno.</string>
+    <string name="schedules_empty">Todavía no hay horarios registrados. Usa + para agregar uno.</string>
+    <string name="schedules_add">Agregar horario</string>
+    <string name="schedules_add_title">Nuevo horario</string>
+    <string name="schedules_edit_title">Editar horario</string>
+    <string name="schedules_need_barber">Primero registra un barbero para poder asignarle un horario.</string>
+    <string name="schedule_barber_hint">Barbero</string>
+    <string name="schedule_day_hint">Día de la semana</string>
+    <string name="schedule_start_hint">Hora de inicio</string>
+    <string name="schedule_end_hint">Hora de término</string>
+    <string name="schedule_duration_hint">Duración de cada turno</string>
+    <string name="schedule_active_label">Horario activo</string>
+    <string name="schedule_save">Guardar horario</string>
+    <string name="schedule_edit">Editar</string>
+    <string name="schedule_activate">Activar</string>
+    <string name="schedule_deactivate">Desactivar</string>
+    <string name="schedule_active">Activo</string>
+    <string name="schedule_inactive">Desactivado</string>
+    <string name="schedule_day_time_format">%1$s · %2$s a %3$s</string>
+    <string name="schedule_duration_format">Turnos de %1$d minutos</string>
+    <string name="schedule_complete_fields">Selecciona un barbero, un día y la duración del turno.</string>
+    <string name="schedule_invalid_range">Revisa las horas: el inicio debe ser anterior al término.</string>
+    <string name="schedule_duplicate_day">Ese barbero ya tiene un horario para ese día. Edita el horario existente.</string>
+    <string name="schedule_saved">Horario guardado.</string>
+    <string name="schedule_activated">Horario activado.</string>
+    <string name="schedule_deactivated">Horario desactivado.</string>
+    <string name="admin_only">Esta sección solo está disponible para administradores.</string>
+    <string-array name="week_days">
+        <item>Domingo</item>
+        <item>Lunes</item>
+        <item>Martes</item>
+        <item>Miércoles</item>
+        <item>Jueves</item>
+        <item>Viernes</item>
+        <item>Sábado</item>
+    </string-array>
 
     <string name="qa_services">Servicios</string>
     <string name="qa_services_desc">Precios y duración</string>
@@ -54,6 +115,7 @@
 
     <string name="nav_home">Inicio</string>
     <string name="nav_appointments">Citas</string>
+    <string name="nav_all_appointments">Agenda</string>
     <string name="nav_promos">Promos</string>
     <string name="nav_profile">Perfil</string>
 

@@ -95,6 +95,7 @@
 
                 <!-- Próxima cita (estado vacío) -->
                 <TextView
+                    android:id="@+id/home_next_title_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
@@ -102,6 +103,7 @@
                     android:textAppearance="@style/TextAppearance.BarberManager.Section" />
 
                 <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/home_next_card"
                     style="@style/Widget.BarberManager.Card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -153,6 +155,7 @@
 
                 <!-- Accesos rápidos -->
                 <TextView
+                    android:id="@+id/quick_actions_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="28dp"
@@ -168,6 +171,7 @@
 
                 <!-- Promoción -->
                 <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/promo_card"
                     style="@style/Widget.BarberManager.Card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

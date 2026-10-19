@@ -14,9 +14,12 @@ import kotlinx.coroutines.launch
 @Database(
     entities = [
         Service::class, Barber::class, Specialty::class,
-        BarberSpecialty::class, Appointment::class
+        BarberSpecialty::class, Appointment::class, UserAccount::class,
+        BarberSchedule::class, BarberBlockedSlot::class, AppointmentChange::class,
+        Promotion::class, Coupon::class, CouponRedemption::class,
+        AppNotification::class, DeviceRegistration::class
     ],
-    version = 3,
+    version = 5,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -26,6 +29,15 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun barberDao(): BarberDao
     abstract fun specialtyDao(): SpecialtyDao
     abstract fun appointmentDao(): AppointmentDao
+    abstract fun userDao(): UserDao
+    abstract fun barberScheduleDao(): BarberScheduleDao
+    abstract fun barberBlockedSlotDao(): BarberBlockedSlotDao
+    abstract fun appointmentChangeDao(): AppointmentChangeDao
+    abstract fun promotionDao(): PromotionDao
+    abstract fun couponDao(): CouponDao
+    abstract fun couponRedemptionDao(): CouponRedemptionDao
+    abstract fun appNotificationDao(): AppNotificationDao
+    abstract fun deviceRegistrationDao(): DeviceRegistrationDao
 
 
     companion object {
@@ -121,6 +133,131 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /** v3 → v4: incorpora cuentas locales y roles, sin eliminar los datos existentes. */
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `users` (" +
+                            "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                            "`fullName` TEXT NOT NULL, " +
+                            "`email` TEXT NOT NULL, " +
+                            "`passwordHash` TEXT NOT NULL, " +
+                            "`passwordSalt` TEXT NOT NULL, " +
+                            "`role` TEXT NOT NULL, " +
+                            "`active` INTEGER NOT NULL, " +
+                            "`createdAt` INTEGER NOT NULL)"
+                )
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS `index_users_email` ON `users` (`email`)"
+                )
+            }
+        }
+
+        /** v4 → v5: horarios, bloqueos, historial, promociones, cupones y notificaciones. */
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Relaciona las nuevas citas con la cuenta cliente sin romper citas existentes.
+                db.execSQL("ALTER TABLE `appointments` ADD COLUMN `clientUserId` INTEGER")
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_appointments_clientUserId` " +
+                            "ON `appointments` (`clientUserId`)"
+                )
+
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `barber_schedules` (" +
+                            "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                            "`barberId` INTEGER NOT NULL, `dayOfWeek` INTEGER NOT NULL, " +
+                            "`startTime` TEXT NOT NULL, `endTime` TEXT NOT NULL, " +
+                            "`slotDurationMinutes` INTEGER NOT NULL, `active` INTEGER NOT NULL, " +
+                            "FOREIGN KEY(`barberId`) REFERENCES `barbers`(`id`) " +
+                            "ON UPDATE NO ACTION ON DELETE CASCADE)"
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_barber_schedules_barberId` ON `barber_schedules` (`barberId`)")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_barber_schedules_barberId_dayOfWeek` ON `barber_schedules` (`barberId`, `dayOfWeek`)")
+
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `barber_blocked_slots` (" +
+                            "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                            "`barberId` INTEGER NOT NULL, `date` TEXT NOT NULL, " +
+                            "`startTime` TEXT NOT NULL, `endTime` TEXT NOT NULL, " +
+                            "`reason` TEXT NOT NULL, `active` INTEGER NOT NULL, " +
+                            "FOREIGN KEY(`barberId`) REFERENCES `barbers`(`id`) " +
+                            "ON UPDATE NO ACTION ON DELETE CASCADE)"
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_barber_blocked_slots_barberId` ON `barber_blocked_slots` (`barberId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_barber_blocked_slots_barberId_date` ON `barber_blocked_slots` (`barberId`, `date`)")
+
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `appointment_changes` (" +
+                            "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                            "`appointmentId` INTEGER NOT NULL, `changeType` TEXT NOT NULL, " +
+                            "`previousDate` TEXT NOT NULL, `previousTime` TEXT NOT NULL, " +
+                            "`newDate` TEXT, `newTime` TEXT, `reason` TEXT, `changedAt` INTEGER NOT NULL, " +
+                            "FOREIGN KEY(`appointmentId`) REFERENCES `appointments`(`id`) " +
+                            "ON UPDATE NO ACTION ON DELETE CASCADE)"
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_appointment_changes_appointmentId` ON `appointment_changes` (`appointmentId`)")
+
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `promotions` (" +
+                            "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                            "`title` TEXT NOT NULL, `description` TEXT NOT NULL, " +
+                            "`conditions` TEXT NOT NULL, `startsAt` INTEGER NOT NULL, " +
+                            "`endsAt` INTEGER NOT NULL, `active` INTEGER NOT NULL)"
+                )
+
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `coupons` (" +
+                            "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                            "`promotionId` INTEGER, `code` TEXT NOT NULL, " +
+                            "`discountType` TEXT NOT NULL, `discountValue` INTEGER NOT NULL, " +
+                            "`conditions` TEXT NOT NULL, `startsAt` INTEGER NOT NULL, " +
+                            "`endsAt` INTEGER NOT NULL, `maxUses` INTEGER, " +
+                            "`currentUses` INTEGER NOT NULL, `active` INTEGER NOT NULL, " +
+                            "FOREIGN KEY(`promotionId`) REFERENCES `promotions`(`id`) " +
+                            "ON UPDATE NO ACTION ON DELETE SET NULL)"
+                )
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_coupons_code` ON `coupons` (`code`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_coupons_promotionId` ON `coupons` (`promotionId`)")
+
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `coupon_redemptions` (" +
+                            "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                            "`couponId` INTEGER NOT NULL, `userId` INTEGER NOT NULL, " +
+                            "`appointmentId` INTEGER, `discountCents` INTEGER NOT NULL, " +
+                            "`appliedAt` INTEGER NOT NULL, " +
+                            "FOREIGN KEY(`couponId`) REFERENCES `coupons`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, " +
+                            "FOREIGN KEY(`userId`) REFERENCES `users`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, " +
+                            "FOREIGN KEY(`appointmentId`) REFERENCES `appointments`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL)"
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_coupon_redemptions_couponId` ON `coupon_redemptions` (`couponId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_coupon_redemptions_userId` ON `coupon_redemptions` (`userId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_coupon_redemptions_appointmentId` ON `coupon_redemptions` (`appointmentId`)")
+
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `app_notifications` (" +
+                            "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                            "`userId` INTEGER NOT NULL, `appointmentId` INTEGER, " +
+                            "`title` TEXT NOT NULL, `message` TEXT NOT NULL, " +
+                            "`type` TEXT NOT NULL, `status` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, " +
+                            "FOREIGN KEY(`userId`) REFERENCES `users`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, " +
+                            "FOREIGN KEY(`appointmentId`) REFERENCES `appointments`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL)"
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_app_notifications_userId` ON `app_notifications` (`userId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_app_notifications_appointmentId` ON `app_notifications` (`appointmentId`)")
+
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `device_registrations` (" +
+                            "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                            "`userId` INTEGER NOT NULL, `fcmToken` TEXT NOT NULL, " +
+                            "`active` INTEGER NOT NULL, `registeredAt` INTEGER NOT NULL, " +
+                            "FOREIGN KEY(`userId`) REFERENCES `users`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)"
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_device_registrations_userId` ON `device_registrations` (`userId`)")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_device_registrations_fcmToken` ON `device_registrations` (`fcmToken`)")
+            }
+        }
+
         @Volatile
         private var instance: AppDatabase? = null
 
@@ -131,7 +268,7 @@ abstract class AppDatabase : RoomDatabase() {
 
         private fun build(context: Context): AppDatabase {
             val db = Room.databaseBuilder(context, AppDatabase::class.java, DATABASE_NAME)
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 .build()
             CoroutineScope(Dispatchers.IO).launch {
                 if (db.serviceDao().count() == 0) {
