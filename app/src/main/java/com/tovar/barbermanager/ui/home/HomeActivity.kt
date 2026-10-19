@@ -43,8 +43,12 @@ class HomeActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_appointments -> {
-                    showComingSoon()
-                    false
+                    val options = androidx.navigation.NavOptions.Builder()
+                        .setPopUpTo(R.id.homeFragment, inclusive = false)
+                        .setLaunchSingleTop(true)
+                        .build()
+                    navController.navigate(R.id.appointmentsFragment, null, options)
+                    true
                 }
                 R.id.nav_promos -> {
                     showComingSoon()

@@ -128,6 +128,7 @@ class HomeFragment : Fragment() {
         when (action.sprint) {
             SPRINT_CATALOG -> findNavController().navigate(R.id.action_home_to_services)
             SPRINT_BARBERS -> findNavController().navigate(R.id.action_home_to_barbers)
+            SPRINT_BOOKING -> findNavController().navigate(R.id.appointmentsFragment)
             else -> showComingSprint(action.sprint)
         }
     }

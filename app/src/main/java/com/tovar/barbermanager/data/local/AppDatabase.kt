@@ -12,8 +12,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Database(
-    entities = [Service::class, Barber::class, Specialty::class, BarberSpecialty::class],
-    version = 2,
+    entities = [
+        Service::class, Barber::class, Specialty::class,
+        BarberSpecialty::class, Appointment::class
+    ],
+    version = 3,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -22,6 +25,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun serviceDao(): ServiceDao
     abstract fun barberDao(): BarberDao
     abstract fun specialtyDao(): SpecialtyDao
+    abstract fun appointmentDao(): AppointmentDao
+
 
     companion object {
         private const val DATABASE_NAME = "barbermanager.db"
@@ -35,64 +40,84 @@ abstract class AppDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(
                     "CREATE TABLE IF NOT EXISTS `specialties` (" +
-                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
-                        "`name` TEXT NOT NULL, " +
-                        "`active` INTEGER NOT NULL)"
+                            "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                            "`name` TEXT NOT NULL, " +
+                            "`active` INTEGER NOT NULL)"
                 )
                 db.execSQL(
                     "CREATE UNIQUE INDEX IF NOT EXISTS `index_specialties_name` ON `specialties` (`name`)"
                 )
                 db.execSQL(
                     "INSERT INTO specialties (name, active) " +
-                        "SELECT TRIM(specialty), 1 FROM barbers " +
-                        "WHERE TRIM(specialty) <> '' GROUP BY specialty"
+                            "SELECT TRIM(specialty), 1 FROM barbers " +
+                            "WHERE TRIM(specialty) <> '' GROUP BY specialty"
                 )
 
                 // Guarda la relación barbero↔especialidad antes de recrear la tabla.
                 db.execSQL(
                     "CREATE TABLE IF NOT EXISTS `tmp_barber_specialty` (" +
-                        "`barberId` INTEGER NOT NULL, `name` TEXT NOT NULL)"
+                            "`barberId` INTEGER NOT NULL, `name` TEXT NOT NULL)"
                 )
                 db.execSQL(
                     "INSERT INTO tmp_barber_specialty (barberId, name) " +
-                        "SELECT id, TRIM(specialty) FROM barbers WHERE TRIM(specialty) <> ''"
+                            "SELECT id, TRIM(specialty) FROM barbers WHERE TRIM(specialty) <> ''"
                 )
 
                 // Recrea barbers sin la columna de texto libre.
                 db.execSQL(
                     "CREATE TABLE IF NOT EXISTS `barbers_new` (" +
-                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
-                        "`name` TEXT NOT NULL, " +
-                        "`yearsExperience` INTEGER NOT NULL, " +
-                        "`active` INTEGER NOT NULL)"
+                            "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                            "`name` TEXT NOT NULL, " +
+                            "`yearsExperience` INTEGER NOT NULL, " +
+                            "`active` INTEGER NOT NULL)"
                 )
                 db.execSQL(
                     "INSERT INTO `barbers_new` (`id`, `name`, `yearsExperience`, `active`) " +
-                        "SELECT `id`, `name`, `yearsExperience`, `active` FROM `barbers`"
+                            "SELECT `id`, `name`, `yearsExperience`, `active` FROM `barbers`"
                 )
                 db.execSQL("DROP TABLE `barbers`")
                 db.execSQL("ALTER TABLE `barbers_new` RENAME TO `barbers`")
 
                 db.execSQL(
                     "CREATE TABLE IF NOT EXISTS `barber_specialties` (" +
-                        "`barberId` INTEGER NOT NULL, " +
-                        "`specialtyId` INTEGER NOT NULL, " +
-                        "PRIMARY KEY(`barberId`, `specialtyId`), " +
-                        "FOREIGN KEY(`barberId`) REFERENCES `barbers`(`id`) " +
-                        "ON UPDATE NO ACTION ON DELETE CASCADE, " +
-                        "FOREIGN KEY(`specialtyId`) REFERENCES `specialties`(`id`) " +
-                        "ON UPDATE NO ACTION ON DELETE CASCADE)"
+                            "`barberId` INTEGER NOT NULL, " +
+                            "`specialtyId` INTEGER NOT NULL, " +
+                            "PRIMARY KEY(`barberId`, `specialtyId`), " +
+                            "FOREIGN KEY(`barberId`) REFERENCES `barbers`(`id`) " +
+                            "ON UPDATE NO ACTION ON DELETE CASCADE, " +
+                            "FOREIGN KEY(`specialtyId`) REFERENCES `specialties`(`id`) " +
+                            "ON UPDATE NO ACTION ON DELETE CASCADE)"
                 )
                 db.execSQL(
                     "CREATE INDEX IF NOT EXISTS `index_barber_specialties_specialtyId` " +
-                        "ON `barber_specialties` (`specialtyId`)"
+                            "ON `barber_specialties` (`specialtyId`)"
                 )
                 db.execSQL(
                     "INSERT INTO barber_specialties (barberId, specialtyId) " +
-                        "SELECT t.barberId, s.id FROM tmp_barber_specialty t " +
-                        "JOIN specialties s ON s.name = t.name"
+                            "SELECT t.barberId, s.id FROM tmp_barber_specialty t " +
+                            "JOIN specialties s ON s.name = t.name"
                 )
                 db.execSQL("DROP TABLE tmp_barber_specialty")
+            }
+        }
+
+        /** v2 → v3: agrega la tabla `appointments` (citas). */
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `appointments` (" +
+                            "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                            "`clientName` TEXT NOT NULL, " +
+                            "`clientPhone` TEXT NOT NULL, " +
+                            "`barberId` INTEGER NOT NULL, " +
+                            "`barberName` TEXT NOT NULL, " +
+                            "`serviceId` INTEGER NOT NULL, " +
+                            "`serviceName` TEXT NOT NULL, " +
+                            "`servicePrice` REAL NOT NULL, " +
+                            "`date` TEXT NOT NULL, " +
+                            "`time` TEXT NOT NULL, " +
+                            "`status` TEXT NOT NULL)"
+                )
             }
         }
 
@@ -106,7 +131,7 @@ abstract class AppDatabase : RoomDatabase() {
 
         private fun build(context: Context): AppDatabase {
             val db = Room.databaseBuilder(context, AppDatabase::class.java, DATABASE_NAME)
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .build()
             CoroutineScope(Dispatchers.IO).launch {
                 if (db.serviceDao().count() == 0) {
