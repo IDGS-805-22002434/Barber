@@ -13,7 +13,6 @@ import com.tovar.barbermanager.data.SessionManager
 import com.tovar.barbermanager.databinding.ActivityHomeBinding
 import com.tovar.barbermanager.ui.login.LoginActivity
 
-/** Activity anfitriona: conserva el grafo de navegación existente y presenta opciones por rol. */
 class HomeActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityHomeBinding
@@ -35,6 +34,8 @@ class HomeActivity : AppCompatActivity() {
         binding = ActivityHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
         configureNavigationForRole()
+
+        intent.getStringExtra(EXTRA_EMAIL)?.let { SessionManager(this).setActiveEmail(it) }
 
         val navHost = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
@@ -68,6 +69,18 @@ class HomeActivity : AppCompatActivity() {
                 }
                 else -> false
             }
+        }
+
+        // Mantiene resaltada la pestaña correcta aunque se llegue por otro camino
+        // (por ejemplo desde "Agendar cita" en Inicio). isChecked no dispara el listener.
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            val itemId = when (destination.id) {
+                R.id.appointmentsFragment, R.id.bookingFragment, R.id.receiptFragment ->
+                    R.id.nav_appointments
+                R.id.homeFragment -> R.id.nav_home
+                else -> null
+            }
+            if (itemId != null) binding.bottomNav.menu.findItem(itemId)?.isChecked = true
         }
     }
 

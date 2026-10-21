@@ -13,15 +13,24 @@ import androidx.core.view.isVisible
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.tovar.barbermanager.R
+import com.tovar.barbermanager.data.AppointmentRepository
+import com.tovar.barbermanager.data.Dates
 import com.tovar.barbermanager.data.SessionManager
+import com.tovar.barbermanager.data.local.AppDatabase
+import com.tovar.barbermanager.data.local.Appointment
+import com.tovar.barbermanager.data.local.AppointmentStatus
 import com.tovar.barbermanager.databinding.FragmentHomeBinding
 import com.tovar.barbermanager.databinding.ItemQuickActionBinding
 import com.tovar.barbermanager.ui.login.LoginActivity
 import java.util.Calendar
+import kotlinx.coroutines.launch
 
 class HomeFragment : Fragment() {
 
@@ -29,7 +38,6 @@ class HomeFragment : Fragment() {
     private val binding get() = _binding!!
     private lateinit var session: SessionManager
 
-    /** Acceso rápido a una sección; [sprint] indica en qué ciclo del plan se construye. */
     private data class QuickAction(
         @DrawableRes val icon: Int,
         @StringRes val title: Int,
@@ -55,7 +63,7 @@ class HomeFragment : Fragment() {
         configureDashboardForRole()
         setupQuickActions()
 
-        binding.bookButton.setOnClickListener { showComingSprint(SPRINT_BOOKING) }
+        observeNextAppointment()
         binding.logoutButton.setOnClickListener { confirmLogout() }
     }
 
@@ -87,7 +95,6 @@ class HomeFragment : Fragment() {
             ?: displayName(requireActivity().intent.getStringExtra(HomeActivity.EXTRA_EMAIL))
     }
 
-    /** Nombre provisional a partir del correo; se reemplazará por el nombre real del perfil. */
     private fun displayName(email: String?): String {
         val raw = email?.substringBefore('@')?.split('.', '_', '-', '+')?.firstOrNull().orEmpty()
         return if (raw.isBlank()) {
@@ -154,6 +161,53 @@ class HomeFragment : Fragment() {
             SPRINT_SCHEDULES -> findNavController().navigate(R.id.schedulesFragment)
             SPRINT_BOOKING -> findNavController().navigate(R.id.appointmentsFragment)
             else -> showComingSprint(action.sprint)
+        }
+    }
+
+    private fun setupAdminSwitch() {
+        binding.adminSwitch.isChecked = session.isAdmin
+        binding.adminSwitch.setOnCheckedChangeListener { _, checked ->
+            session.isAdmin = checked
+            showSnackbar(
+                getString(if (checked) R.string.admin_enabled else R.string.admin_disabled)
+            )
+        }
+    }
+
+    private fun observeNextAppointment() {
+        val repository = AppointmentRepository(AppDatabase.getInstance(requireContext()))
+        val email = session.currentEmail
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                repository.observeFor(email, isAdmin = false).collect { list ->
+                    val now = Dates.nowKey()
+                    renderNext(
+                        list.firstOrNull {
+                            it.status == AppointmentStatus.CONFIRMADA && "${it.date} ${it.time}" >= now
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    private fun renderNext(next: Appointment?) {
+        if (next == null) {
+            binding.nextTitle.setText(R.string.home_empty_title)
+            binding.nextDesc.setText(R.string.home_empty_desc)
+            binding.bookButton.setText(R.string.home_book)
+            binding.bookButton.setOnClickListener {
+                findNavController().navigate(R.id.action_home_to_booking)
+            }
+        } else {
+            binding.nextTitle.text = next.serviceName
+            binding.nextDesc.text = getString(
+                R.string.home_next_desc, Dates.displayShort(next.date), next.time, next.barberName
+            )
+            binding.bookButton.setText(R.string.home_view_appointments)
+            binding.bookButton.setOnClickListener {
+                findNavController().navigate(R.id.appointmentsFragment)
+            }
         }
     }
 

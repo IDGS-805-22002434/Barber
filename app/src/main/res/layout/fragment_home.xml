@@ -129,6 +129,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="12dp"
+                            android:id="@+id/next_title"
                             android:text="@string/home_empty_title"
                             android:textColor="@color/text_primary"
                             android:textSize="17sp"
@@ -139,6 +140,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
                             android:gravity="center"
+                            android:id="@+id/next_desc"
                             android:text="@string/home_empty_desc"
                             android:textColor="@color/text_secondary"
                             android:textSize="14sp" />

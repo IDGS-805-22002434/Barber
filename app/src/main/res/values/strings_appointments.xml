@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Inicio: tarjeta de próxima cita -->
+    <string name="home_next_desc">%1$s · %2$s con %3$s</string>
+    <string name="home_view_appointments">Ver mis citas</string>
+
+    <!-- Lista de citas (RF05.04) -->
+    <string name="appointments_title">Mis citas</string>
+    <string name="appointments_title_admin">Citas</string>
+    <string name="appointments_subtitle">Próximas y anteriores</string>
+    <string name="appointments_subtitle_admin">Todas las citas de la barbería</string>
+    <string name="tab_upcoming">Próximas</string>
+    <string name="tab_past">Anteriores</string>
+    <string name="appointments_empty_upcoming">No tienes citas próximas. Toca + para agendar una.</string>
+    <string name="appointments_empty_past">Aún no tienes citas anteriores.</string>
+    <string name="cd_add_appointment">Agendar cita</string>
+
+    <string name="status_confirmed">Confirmada</string>
+    <string name="status_cancelled">Cancelada</string>
+    <string name="status_completed">Atendida</string>
+    <string name="status_past">Pasada</string>
+
+    <string name="appt_with_barber">Con %1$s</string>
+    <string name="appt_client_with_barber">%1$s · con %2$s</string>
+    <string name="appt_date_time">%1$s · %2$s</string>
+    <string name="appt_cancel">Cancelar</string>
+    <string name="appt_reschedule">Reprogramar</string>
+    <string name="appt_complete">Marcar atendida</string>
+    <string name="appt_policy_note">Ya no se puede cancelar ni reprogramar: faltan menos de %1$d horas.</string>
+
+    <string name="cancel_dialog_title">Cancelar cita</string>
+    <string name="cancel_dialog_message">¿Cancelar la cita de %1$s del %2$s a las %3$s? El horario quedará libre para otras personas.</string>
+    <string name="cancel_dialog_confirm">Sí, cancelar</string>
+    <string name="cancel_dialog_keep">Conservar</string>
+    <string name="msg_cancelled">Cita cancelada.</string>
+    <string name="msg_completed">Cita marcada como atendida.</string>
+    <string name="msg_change_not_allowed">No se puede cambiar esta cita: solo se permite con al menos %1$d horas de anticipación.</string>
+
+    <!-- Agendar y reprogramar (RF05, RF06) -->
+    <string name="booking_title">Agendar cita</string>
+    <string name="reschedule_title">Reprogramar cita</string>
+    <string name="hint_booking_service">Servicio</string>
+    <string name="hint_booking_barber">Barbero</string>
+    <string name="hint_booking_name">Tu nombre</string>
+    <string name="hint_booking_phone">Teléfono (opcional)</string>
+    <string name="hint_booking_date">Fecha</string>
+    <string name="cd_pick_date">Elegir fecha</string>
+    <string name="booking_date_picker_title">Elige la fecha</string>
+    <string name="booking_slots_label">Horarios disponibles</string>
+    <string name="booking_slots_choose">Elige barbero y fecha para ver los horarios.</string>
+    <string name="booking_slots_loading">Buscando horarios…</string>
+    <string name="booking_slots_none">No hay horarios disponibles ese día. Prueba con otra fecha.</string>
+    <string name="booking_confirm">Confirmar cita</string>
+    <string name="reschedule_confirm">Confirmar nuevo horario</string>
+    <string name="booking_summary">%1$s · %2$s\nCon %3$s\n%4$s a las %5$s</string>
+    <string name="booking_reschedule_header">%1$s · con %2$s\n%3$s</string>
+    <string name="reschedule_current">Cita actual: %1$s a las %2$s</string>
+    <string name="booking_unavailable">Por ahora no hay servicios o barberos disponibles para agendar.</string>
+    <string name="error_booking_service">Elige un servicio.</string>
+    <string name="error_booking_barber">Elige un barbero.</string>
+    <string name="error_booking_name">Escribe tu nombre.</string>
+    <string name="error_booking_date">Elige una fecha.</string>
+    <string name="error_booking_time">Elige un horario disponible.</string>
+    <string name="msg_slot_taken">Ese horario acaba de ocuparse. Elige otro, por favor.</string>
+
+    <!-- Comprobante (RF05.03) -->
+    <string name="receipt_title">Comprobante</string>
+    <string name="receipt_header_confirmed">Cita confirmada</string>
+    <string name="receipt_header_cancelled">Cita cancelada</string>
+    <string name="receipt_header_completed">Cita atendida</string>
+    <string name="receipt_folio">Folio %1$s</string>
+    <string name="receipt_client">Cliente</string>
+    <string name="receipt_phone">Teléfono</string>
+    <string name="receipt_service">Servicio</string>
+    <string name="receipt_barber">Barbero</string>
+    <string name="receipt_date">Fecha</string>
+    <string name="receipt_time">Hora</string>
+    <string name="receipt_total">Total</string>
+    <string name="receipt_status">Estado</string>
+    <string name="receipt_history_title">Historial de cambios</string>
+    <string name="receipt_history_rescheduled">Reprogramada: %1$s %2$s → %3$s %4$s</string>
+    <string name="receipt_history_cancelled">Cancelada (era el %1$s a las %2$s)</string>
+    <string name="receipt_share">Compartir comprobante</string>
+    <string name="receipt_view_appointments">Ver mis citas</string>
+    <string name="receipt_not_found">No encontramos esa cita.</string>
+    <string name="receipt_share_text">BarberManager · Comprobante %1$s\nCliente: %2$s\nServicio: %3$s\nBarbero: %4$s\nFecha: %5$s\nHora: %6$s\nTotal: %7$s\nEstado: %8$s</string>
+    <string name="receipt_share_chooser">Compartir comprobante</string>
+
+    <!-- Horario del barbero (RF04.03, administrador) -->
+    <string name="schedule_title">Horario</string>
+    <string name="schedule_manage">Horario y disponibilidad</string>
+    <string name="schedule_for_barber">Horario de %1$s</string>
+    <string name="schedule_hint">Activa los días de trabajo y ajusta la hora de entrada y salida. Cada cita dura 30 minutos. Los días sin configurar usan lunes a sábado de 10:00 a 19:00.</string>
+    <string name="schedule_to">a</string>
+    <string name="schedule_closed">Descanso</string>
+    <string name="schedule_start_picker">Hora de entrada</string>
+    <string name="schedule_end_picker">Hora de salida</string>
+    <string name="schedule_invalid_range">La salida debe ser al menos 30 minutos después de la entrada.</string>
+    <string name="schedule_blocks_title">Horarios bloqueados</string>
+    <string name="schedule_blocks_hint">Bloquea horas puntuales (comida, permisos…). No se ofrecen a los clientes.</string>
+    <string name="schedule_blocks_empty">No hay horarios bloqueados.</string>
+    <string name="schedule_block_add">Bloquear horario</string>
+    <string name="schedule_block_date_title">Fecha a bloquear</string>
+    <string name="schedule_block_pick_title">Hora a bloquear · %1$s</string>
+    <string name="schedule_block_none">No hay horarios libres ese día.</string>
+    <string name="schedule_unblock">Quitar</string>
+
+    <string-array name="schedule_days">
+        <item>Lunes</item>
+        <item>Martes</item>
+        <item>Miércoles</item>
+        <item>Jueves</item>
+        <item>Viernes</item>
+        <item>Sábado</item>
+        <item>Domingo</item>
+    </string-array>
+</resources>
