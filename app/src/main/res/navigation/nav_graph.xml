@@ -86,6 +86,12 @@
     </fragment>
 
     <fragment
+        android:id="@+id/schedulesFragment"
+        android:name="com.tovar.barbermanager.ui.schedules.SchedulesFragment"
+        android:label="@string/schedules_title"
+        tools:layout="@layout/fragment_schedules" />
+
+    <fragment
         android:id="@+id/appointmentsFragment"
         android:name="com.tovar.barbermanager.ui.appointments.AppointmentsFragment"
         android:label="@string/appointments_title"

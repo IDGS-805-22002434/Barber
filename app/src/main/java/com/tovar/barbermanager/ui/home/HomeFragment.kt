@@ -9,6 +9,7 @@ import android.widget.GridLayout
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.core.view.ViewCompat
+import androidx.core.view.isVisible
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
@@ -59,8 +60,8 @@ class HomeFragment : Fragment() {
 
         applyInsets()
         bindGreeting()
+        configureDashboardForRole()
         setupQuickActions()
-        setupAdminSwitch()
 
         observeNextAppointment()
         binding.logoutButton.setOnClickListener { confirmLogout() }
@@ -90,9 +91,8 @@ class HomeFragment : Fragment() {
                 else -> R.string.greeting_night
             }
         )
-        binding.nameText.text = displayName(
-            requireActivity().intent.getStringExtra(HomeActivity.EXTRA_EMAIL)
-        )
+        binding.nameText.text = session.userName?.takeIf { it.isNotBlank() }
+            ?: displayName(requireActivity().intent.getStringExtra(HomeActivity.EXTRA_EMAIL))
     }
 
     private fun displayName(email: String?): String {
@@ -104,13 +104,35 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun setupQuickActions() {
-        val actions = listOf(
-            QuickAction(R.drawable.ic_scissors, R.string.qa_services, R.string.qa_services_desc, SPRINT_CATALOG),
-            QuickAction(R.drawable.ic_person, R.string.qa_barbers, R.string.qa_barbers_desc, SPRINT_BARBERS),
-            QuickAction(R.drawable.ic_calendar, R.string.qa_appointments, R.string.qa_appointments_desc, SPRINT_BOOKING),
-            QuickAction(R.drawable.ic_offer, R.string.qa_promos, R.string.qa_promos_desc, SPRINT_LOYALTY)
+    private fun configureDashboardForRole() {
+        val isAdmin = session.isAdmin
+        // El control que antes elevaba permisos manualmente se retira de la interfaz.
+        binding.adminSwitch.isVisible = false
+        binding.homeNextTitleText.isVisible = !isAdmin
+        binding.homeNextCard.isVisible = !isAdmin
+        binding.promoCard.isVisible = !isAdmin
+        binding.quickActionsTitle.setText(
+            if (isAdmin) R.string.admin_dashboard_title else R.string.home_quick_title
         )
+    }
+
+    private fun setupQuickActions() {
+        val actions = if (session.isAdmin) {
+            listOf(
+                QuickAction(R.drawable.ic_scissors, R.string.qa_services, R.string.qa_services_admin_desc, SPRINT_CATALOG),
+                QuickAction(R.drawable.ic_person, R.string.qa_barbers, R.string.qa_barbers_admin_desc, SPRINT_BARBERS),
+                QuickAction(R.drawable.ic_person, R.string.qa_specialties, R.string.qa_specialties_desc, SPRINT_SPECIALTIES),
+                QuickAction(R.drawable.ic_calendar, R.string.qa_schedules, R.string.qa_schedules_desc, SPRINT_SCHEDULES),
+                QuickAction(R.drawable.ic_calendar, R.string.qa_manage_appointments, R.string.qa_manage_appointments_desc, SPRINT_BOOKING)
+            )
+        } else {
+            listOf(
+                QuickAction(R.drawable.ic_scissors, R.string.qa_services, R.string.qa_services_desc, SPRINT_CATALOG),
+                QuickAction(R.drawable.ic_person, R.string.qa_barbers, R.string.qa_barbers_desc, SPRINT_BARBERS),
+                QuickAction(R.drawable.ic_calendar, R.string.qa_appointments, R.string.qa_appointments_desc, SPRINT_BOOKING),
+                QuickAction(R.drawable.ic_offer, R.string.qa_promos, R.string.qa_promos_desc, SPRINT_LOYALTY)
+            )
+        }
         val margin = (6 * resources.displayMetrics.density).toInt()
 
         actions.forEach { action ->
@@ -135,6 +157,8 @@ class HomeFragment : Fragment() {
         when (action.sprint) {
             SPRINT_CATALOG -> findNavController().navigate(R.id.action_home_to_services)
             SPRINT_BARBERS -> findNavController().navigate(R.id.action_home_to_barbers)
+            SPRINT_SPECIALTIES -> findNavController().navigate(R.id.specialtiesFragment)
+            SPRINT_SCHEDULES -> findNavController().navigate(R.id.schedulesFragment)
             SPRINT_BOOKING -> findNavController().navigate(R.id.appointmentsFragment)
             else -> showComingSprint(action.sprint)
         }
@@ -215,5 +239,7 @@ class HomeFragment : Fragment() {
         const val SPRINT_BARBERS = 2
         const val SPRINT_BOOKING = 3
         const val SPRINT_LOYALTY = 4
+        const val SPRINT_SPECIALTIES = 5
+        const val SPRINT_SCHEDULES = 6
     }
 }

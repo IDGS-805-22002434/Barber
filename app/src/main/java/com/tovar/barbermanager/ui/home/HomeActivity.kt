@@ -1,5 +1,6 @@
 package com.tovar.barbermanager.ui.home
 
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.SystemBarStyle
@@ -10,16 +11,29 @@ import com.google.android.material.snackbar.Snackbar
 import com.tovar.barbermanager.R
 import com.tovar.barbermanager.data.SessionManager
 import com.tovar.barbermanager.databinding.ActivityHomeBinding
+import com.tovar.barbermanager.ui.login.LoginActivity
 
 class HomeActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityHomeBinding
+    private lateinit var session: SessionManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        session = SessionManager(this)
+        if (!session.hasActiveSession) {
+            startActivity(
+                Intent(this, LoginActivity::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            )
+            finish()
+            return
+        }
+
         enableEdgeToEdge(statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT))
         binding = ActivityHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        configureNavigationForRole()
 
         intent.getStringExtra(EXTRA_EMAIL)?.let { SessionManager(this).setActiveEmail(it) }
 
@@ -67,6 +81,15 @@ class HomeActivity : AppCompatActivity() {
                 else -> null
             }
             if (itemId != null) binding.bottomNav.menu.findItem(itemId)?.isChecked = true
+        }
+    }
+
+    private fun configureNavigationForRole() {
+        val menu = binding.bottomNav.menu
+        if (session.isAdmin) {
+            menu.findItem(R.id.nav_promos).isVisible = false
+            menu.findItem(R.id.nav_profile).isVisible = false
+            menu.findItem(R.id.nav_appointments).title = getString(R.string.nav_all_appointments)
         }
     }
 
