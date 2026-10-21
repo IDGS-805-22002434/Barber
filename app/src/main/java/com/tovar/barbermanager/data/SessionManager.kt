@@ -2,14 +2,7 @@ package com.tovar.barbermanager.data
 
 import android.content.Context
 
-/**
- * Guarda la sesión del usuario en el dispositivo.
- *
- * Por ahora usa SharedPreferences como marcador de "sesión recordada".
- * Cuando exista backend, aquí se guardará el token (idealmente con
- * EncryptedSharedPreferences o DataStore + Keystore) para cumplir con
- * "persistencia de sesión segura" de la HU-01.
- */
+
 class SessionManager(context: Context) {
 
     private val prefs = context.applicationContext
@@ -21,11 +14,13 @@ class SessionManager(context: Context) {
     val userEmail: String?
         get() = prefs.getString(KEY_EMAIL, null)
 
-    /**
-     * Modo administrador: habilita el CRUD del catálogo de servicios (RF02.03).
-     * Prototipo: se activa con un switch en Inicio; con backend se reemplaza
-     * por el rol real que devuelva el servidor.
-     */
+    val currentEmail: String?
+        get() = prefs.getString(KEY_ACTIVE_EMAIL, null) ?: userEmail
+
+    fun setActiveEmail(email: String) {
+        prefs.edit().putString(KEY_ACTIVE_EMAIL, email).apply()
+    }
+
     var isAdmin: Boolean
         get() = prefs.getBoolean(KEY_ADMIN, false)
         set(value) {
@@ -48,5 +43,6 @@ class SessionManager(context: Context) {
         const val KEY_LOGGED_IN = "logged_in"
         const val KEY_EMAIL = "email"
         const val KEY_ADMIN = "admin_mode"
+        const val KEY_ACTIVE_EMAIL = "active_email"
     }
 }

@@ -1,5 +1,6 @@
 package com.tovar.barbermanager.data.local
 
+
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
@@ -13,10 +14,11 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [
-        Service::class, Barber::class, Specialty::class,
-        BarberSpecialty::class, Appointment::class
+        Service::class, Barber::class, Specialty::class, BarberSpecialty::class,
+        Appointment::class, AppointmentHistory::class,
+        BarberSchedule::class, BlockedSlot::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -26,6 +28,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun barberDao(): BarberDao
     abstract fun specialtyDao(): SpecialtyDao
     abstract fun appointmentDao(): AppointmentDao
+    abstract fun scheduleDao(): ScheduleDao
 
 
     companion object {
@@ -101,24 +104,93 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        /** v2 → v3: agrega la tabla `appointments` (citas). */
-        val MIGRATION_2_3 = object : Migration(2, 3) {
+        /**
+         * v2 → v4 (citas y horarios, RF04–RF06). Crea las tablas de citas, historial,
+         * horarios de barberos y horarios bloqueados.
+         * La tabla `appointments` de la versión de prueba (sin pantalla para llenarla)
+         * se recrea con las columnas definitivas.
+         */
+        val MIGRATION_2_4 = object : Migration(2, 4) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL(
-                    "CREATE TABLE IF NOT EXISTS `appointments` (" +
-                            "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
-                            "`clientName` TEXT NOT NULL, " +
-                            "`clientPhone` TEXT NOT NULL, " +
-                            "`barberId` INTEGER NOT NULL, " +
-                            "`barberName` TEXT NOT NULL, " +
-                            "`serviceId` INTEGER NOT NULL, " +
-                            "`serviceName` TEXT NOT NULL, " +
-                            "`servicePrice` REAL NOT NULL, " +
-                            "`date` TEXT NOT NULL, " +
-                            "`time` TEXT NOT NULL, " +
-                            "`status` TEXT NOT NULL)"
-                )
+                createBookingTables(db)
             }
+        }
+
+        /** v3 → v4: la versión de prueba ya tenía `appointments`; se recrea completa. */
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                createBookingTables(db)
+            }
+        }
+
+        private fun createBookingTables(db: SupportSQLiteDatabase) {
+            db.execSQL("DROP TABLE IF EXISTS `appointments`")
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `appointments` (" +
+                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`userEmail` TEXT NOT NULL, " +
+                        "`clientName` TEXT NOT NULL, " +
+                        "`clientPhone` TEXT NOT NULL, " +
+                        "`barberId` INTEGER NOT NULL, " +
+                        "`barberName` TEXT NOT NULL, " +
+                        "`serviceId` INTEGER NOT NULL, " +
+                        "`serviceName` TEXT NOT NULL, " +
+                        "`priceCents` INTEGER NOT NULL, " +
+                        "`date` TEXT NOT NULL, " +
+                        "`time` TEXT NOT NULL, " +
+                        "`status` TEXT NOT NULL, " +
+                        "`createdAt` INTEGER NOT NULL)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_appointments_barberId_date_time` " +
+                        "ON `appointments` (`barberId`, `date`, `time`)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_appointments_userEmail` " +
+                        "ON `appointments` (`userEmail`)"
+            )
+
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `appointment_history` (" +
+                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`appointmentId` INTEGER NOT NULL, " +
+                        "`action` TEXT NOT NULL, " +
+                        "`oldDate` TEXT NOT NULL, " +
+                        "`oldTime` TEXT NOT NULL, " +
+                        "`newDate` TEXT NOT NULL, " +
+                        "`newTime` TEXT NOT NULL, " +
+                        "`createdAt` INTEGER NOT NULL)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_appointment_history_appointmentId` " +
+                        "ON `appointment_history` (`appointmentId`)"
+            )
+
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `barber_schedules` (" +
+                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`barberId` INTEGER NOT NULL, " +
+                        "`dayOfWeek` INTEGER NOT NULL, " +
+                        "`startMinutes` INTEGER NOT NULL, " +
+                        "`endMinutes` INTEGER NOT NULL, " +
+                        "`active` INTEGER NOT NULL)"
+            )
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS `index_barber_schedules_barberId_dayOfWeek` " +
+                        "ON `barber_schedules` (`barberId`, `dayOfWeek`)"
+            )
+
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `blocked_slots` (" +
+                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`barberId` INTEGER NOT NULL, " +
+                        "`date` TEXT NOT NULL, " +
+                        "`time` TEXT NOT NULL)"
+            )
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS `index_blocked_slots_barberId_date_time` " +
+                        "ON `blocked_slots` (`barberId`, `date`, `time`)"
+            )
         }
 
         @Volatile
@@ -131,7 +203,7 @@ abstract class AppDatabase : RoomDatabase() {
 
         private fun build(context: Context): AppDatabase {
             val db = Room.databaseBuilder(context, AppDatabase::class.java, DATABASE_NAME)
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_4, MIGRATION_3_4)
                 .build()
             CoroutineScope(Dispatchers.IO).launch {
                 if (db.serviceDao().count() == 0) {

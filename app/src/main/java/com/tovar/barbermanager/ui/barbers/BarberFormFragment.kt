@@ -20,9 +20,9 @@ import com.tovar.barbermanager.data.SessionManager
 import com.tovar.barbermanager.data.local.Barber
 import com.tovar.barbermanager.data.local.Specialty
 import com.tovar.barbermanager.databinding.FragmentBarberFormBinding
+import com.tovar.barbermanager.ui.schedule.ScheduleFragment
 import kotlinx.coroutines.launch
 
-/** Alta y edición de barberos (RF03.02) con asignación de especialidades (RF03.03). */
 class BarberFormFragment : Fragment() {
 
     private var _binding: FragmentBarberFormBinding? = null
@@ -60,6 +60,14 @@ class BarberFormFragment : Fragment() {
             else R.string.barber_form_edit_title
         )
         binding.saveButton.setOnClickListener { attemptSave() }
+
+        binding.scheduleButton.isVisible = barberId != BarberFormViewModel.BARBER_ID_NEW
+        binding.scheduleButton.setOnClickListener {
+            findNavController().navigate(
+                R.id.action_barberForm_to_schedule,
+                Bundle().apply { putLong(ScheduleFragment.ARG_BARBER_ID, barberId) }
+            )
+        }
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {

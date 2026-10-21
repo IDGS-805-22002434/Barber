@@ -17,6 +17,10 @@
         <action
             android:id="@+id/action_home_to_barbers"
             app:destination="@id/barbersFragment" />
+
+        <action
+            android:id="@+id/action_home_to_booking"
+            app:destination="@id/bookingFragment" />
     </fragment>
 
     <fragment
@@ -63,13 +67,69 @@
             android:name="barberId"
             app:argType="long"
             android:defaultValue="0L" />
+
+        <action
+            android:id="@+id/action_barberForm_to_schedule"
+            app:destination="@id/scheduleFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/scheduleFragment"
+        android:name="com.tovar.barbermanager.ui.schedule.ScheduleFragment"
+        android:label="@string/schedule_title"
+        tools:layout="@layout/fragment_schedule">
+
+        <argument
+            android:name="barberId"
+            app:argType="long"
+            android:defaultValue="0L" />
     </fragment>
 
     <fragment
         android:id="@+id/appointmentsFragment"
         android:name="com.tovar.barbermanager.ui.appointments.AppointmentsFragment"
-        android:label="Mis Citas"
-        tools:layout="@layout/fragment_appointments" />
+        android:label="@string/appointments_title"
+        tools:layout="@layout/fragment_appointments">
+
+        <action
+            android:id="@+id/action_appointments_to_booking"
+            app:destination="@id/bookingFragment" />
+
+        <action
+            android:id="@+id/action_appointments_to_receipt"
+            app:destination="@id/receiptFragment" />
+    </fragment>
+
+    <!-- appointmentId = 0: cita nueva; distinto de 0: reprogramar esa cita -->
+    <fragment
+        android:id="@+id/bookingFragment"
+        android:name="com.tovar.barbermanager.ui.appointments.BookingFragment"
+        android:label="@string/booking_title"
+        tools:layout="@layout/fragment_booking">
+
+        <argument
+            android:name="appointmentId"
+            app:argType="long"
+            android:defaultValue="0L" />
+
+        <action
+            android:id="@+id/action_booking_to_receipt"
+            app:destination="@id/receiptFragment"
+            app:popUpTo="@id/bookingFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/receiptFragment"
+        android:name="com.tovar.barbermanager.ui.appointments.ReceiptFragment"
+        android:label="@string/receipt_title"
+        tools:layout="@layout/fragment_receipt">
+
+        <argument
+            android:name="appointmentId"
+            app:argType="long"
+            android:defaultValue="0L" />
+    </fragment>
 
     <fragment
         android:id="@+id/specialtiesFragment"

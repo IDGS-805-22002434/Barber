@@ -142,6 +142,16 @@
                 android:textColor="@color/text_primary" />
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/schedule_button"
+                style="@style/Widget.BarberManager.Button.Outlined"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="@string/schedule_manage"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/save_button"
                 style="@style/Widget.BarberManager.Button.Primary"
                 android:layout_width="match_parent"
