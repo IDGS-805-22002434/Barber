@@ -164,16 +164,6 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun setupAdminSwitch() {
-        binding.adminSwitch.isChecked = session.isAdmin
-        binding.adminSwitch.setOnCheckedChangeListener { _, checked ->
-            session.isAdmin = checked
-            showSnackbar(
-                getString(if (checked) R.string.admin_enabled else R.string.admin_disabled)
-            )
-        }
-    }
-
     private fun observeNextAppointment() {
         val repository = AppointmentRepository(AppDatabase.getInstance(requireContext()))
         val email = session.currentEmail

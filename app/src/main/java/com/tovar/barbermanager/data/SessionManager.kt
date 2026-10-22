@@ -19,6 +19,9 @@ class SessionManager(context: Context) {
     val userEmail: String?
         get() = prefs.getString(KEY_EMAIL, null)
 
+    val userName: String?
+        get() = prefs.getString(KEY_NAME, null)
+
     val currentEmail: String?
         get() = prefs.getString(KEY_ACTIVE_EMAIL, null) ?: userEmail
 
@@ -26,20 +29,14 @@ class SessionManager(context: Context) {
         prefs.edit().putString(KEY_ACTIVE_EMAIL, email).apply()
     }
 
-    var isAdmin: Boolean
-        get() = prefs.getBoolean(KEY_ADMIN, false)
-        set(value) {
-            prefs.edit().putBoolean(KEY_ADMIN, value).apply()
-        }
+    val isAdmin: Boolean
+        get() = userRole == UserRole.ADMINISTRADOR
 
     val userId: Long
         get() = prefs.getLong(KEY_USER_ID, 0L)
 
     val userRole: UserRole
         get() = UserRole.fromStorage(prefs.getString(KEY_ROLE, UserRole.CLIENTE.name))
-
-    val isAdmin: Boolean
-        get() = userRole == UserRole.ADMINISTRADOR
 
     fun saveSession(user: UserAccount, rememberMe: Boolean) {
         prefs.edit()
@@ -61,8 +58,9 @@ class SessionManager(context: Context) {
         const val KEY_ACTIVE_SESSION = "active_session"
         const val KEY_REMEMBER = "remember_login"
         const val KEY_USER_ID = "user_id"
+        const val KEY_NAME = "user_name"
         const val KEY_EMAIL = "email"
-        const val KEY_ADMIN = "admin_mode"
+        const val KEY_ROLE = "role"
         const val KEY_ACTIVE_EMAIL = "active_email"
     }
 }

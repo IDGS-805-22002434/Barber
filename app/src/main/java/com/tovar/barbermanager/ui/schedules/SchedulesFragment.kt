@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.tovar.barbermanager.R
+import com.tovar.barbermanager.data.Scheduling
 import com.tovar.barbermanager.data.SessionManager
 import com.tovar.barbermanager.data.local.AppDatabase
 import com.tovar.barbermanager.data.local.Barber
@@ -138,9 +139,8 @@ class SchedulesFragment : Fragment() {
                         id = item?.schedule?.id ?: 0L,
                         barberId = barber.id,
                         dayOfWeek = dayOfWeek,
-                        startTime = start,
-                        endTime = end,
-                        slotDurationMinutes = duration,
+                        startMinutes = Scheduling.parseMinutes(start),
+                        endMinutes = Scheduling.parseMinutes(end),
                         active = dialogBinding.scheduleActiveCheck.isChecked
                     )
                     dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).isEnabled = false
