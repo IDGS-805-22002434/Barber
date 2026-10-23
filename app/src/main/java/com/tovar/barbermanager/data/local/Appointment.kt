@@ -3,7 +3,6 @@ package com.tovar.barbermanager.data.local
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import androidx.room.Index
 
 /** Estados de una cita. */
 object AppointmentStatus {

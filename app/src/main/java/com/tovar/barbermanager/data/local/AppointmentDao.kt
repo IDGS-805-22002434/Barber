@@ -16,10 +16,6 @@ interface AppointmentDao {
     @Query("SELECT * FROM appointments ORDER BY date, time")
     fun observeAll(): Flow<List<Appointment>>
 
-    /** Uso de cliente: limita las citas al usuario autenticado. */
-    @Query("SELECT * FROM appointments WHERE clientUserId = :userId ORDER BY date DESC, time DESC")
-    fun observeForClient(userId: Long): Flow<List<Appointment>>
-
     @Query("SELECT * FROM appointments WHERE id = :id")
     suspend fun getById(id: Long): Appointment?
 

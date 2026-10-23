@@ -64,7 +64,7 @@ class ScheduleFragment : Fragment() {
                 launch { viewModel.state.collect { if (it.loaded) render(it) } }
                 launch {
                     viewModel.invalidRange.collect {
-                        Snackbar.make(binding.root, R.string.schedule_invalid_range, Snackbar.LENGTH_LONG)
+                        Snackbar.make(binding.root, R.string.schedule_invalid_range_appointment, Snackbar.LENGTH_LONG)
                             .show()
                     }
                 }

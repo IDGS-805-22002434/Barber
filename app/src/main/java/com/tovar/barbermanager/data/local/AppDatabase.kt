@@ -1,6 +1,5 @@
 package com.tovar.barbermanager.data.local
 
-
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
@@ -14,31 +13,27 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [
-        Service::class, Barber::class, Specialty::class, BarberSpecialty::class,
+        UserAccount::class, Service::class, Barber::class, Specialty::class, BarberSpecialty::class,
         Appointment::class, AppointmentHistory::class,
         BarberSchedule::class, BlockedSlot::class
     ],
-    version = 4,
-    exportSchema = true
+    version = 5,
+    exportSchema = false
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
 
+    abstract fun userDao(): UserDao
     abstract fun serviceDao(): ServiceDao
     abstract fun barberDao(): BarberDao
     abstract fun specialtyDao(): SpecialtyDao
     abstract fun appointmentDao(): AppointmentDao
     abstract fun scheduleDao(): ScheduleDao
-
+    abstract fun barberScheduleDao(): BarberScheduleDao
 
     companion object {
         private const val DATABASE_NAME = "barbermanager.db"
 
-        /**
-         * v1 → v2 (RF03.03): la columna de texto `barbers.specialty` pasa a ser
-         * el catálogo `specialties` + relación N:N `barber_specialties`.
-         * Las especialidades ya escritas en los barberos se conservan y quedan enlazadas.
-         */
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(
@@ -56,7 +51,6 @@ abstract class AppDatabase : RoomDatabase() {
                             "WHERE TRIM(specialty) <> '' GROUP BY specialty"
                 )
 
-                // Guarda la relación barbero↔especialidad antes de recrear la tabla.
                 db.execSQL(
                     "CREATE TABLE IF NOT EXISTS `tmp_barber_specialty` (" +
                             "`barberId` INTEGER NOT NULL, `name` TEXT NOT NULL)"
@@ -66,7 +60,6 @@ abstract class AppDatabase : RoomDatabase() {
                             "SELECT id, TRIM(specialty) FROM barbers WHERE TRIM(specialty) <> ''"
                 )
 
-                // Recrea barbers sin la columna de texto libre.
                 db.execSQL(
                     "CREATE TABLE IF NOT EXISTS `barbers_new` (" +
                             "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
@@ -104,22 +97,34 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        /**
-         * v2 → v4 (citas y horarios, RF04–RF06). Crea las tablas de citas, historial,
-         * horarios de barberos y horarios bloqueados.
-         * La tabla `appointments` de la versión de prueba (sin pantalla para llenarla)
-         * se recrea con las columnas definitivas.
-         */
         val MIGRATION_2_4 = object : Migration(2, 4) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 createBookingTables(db)
             }
         }
 
-        /** v3 → v4: la versión de prueba ya tenía `appointments`; se recrea completa. */
         val MIGRATION_3_4 = object : Migration(3, 4) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 createBookingTables(db)
+            }
+        }
+
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `users` (" +
+                            "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                            "`fullName` TEXT NOT NULL, " +
+                            "`email` TEXT NOT NULL, " +
+                            "`passwordHash` TEXT NOT NULL, " +
+                            "`passwordSalt` TEXT NOT NULL, " +
+                            "`role` TEXT NOT NULL, " +
+                            "`active` INTEGER NOT NULL, " +
+                            "`createdAt` INTEGER NOT NULL)"
+                )
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS `index_users_email` ON `users` (`email`)"
+                )
             }
         }
 
@@ -203,7 +208,8 @@ abstract class AppDatabase : RoomDatabase() {
 
         private fun build(context: Context): AppDatabase {
             val db = Room.databaseBuilder(context, AppDatabase::class.java, DATABASE_NAME)
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_4, MIGRATION_3_4)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_4, MIGRATION_3_4, MIGRATION_4_5)
+                .fallbackToDestructiveMigration()
                 .build()
             CoroutineScope(Dispatchers.IO).launch {
                 if (db.serviceDao().count() == 0) {
@@ -222,7 +228,6 @@ abstract class AppDatabase : RoomDatabase() {
             return db
         }
 
-        /** Enlaza los barberos de prueba con sus especialidades (instalaciones nuevas). */
         private suspend fun seedSpecialtyLinks(db: AppDatabase) {
             val barbersByName = db.barberDao().getAll().associateBy { it.name }
             val specialtiesByName = db.specialtyDao().getAll().associateBy { it.name }

@@ -95,7 +95,7 @@
     <string name="schedule_closed">Descanso</string>
     <string name="schedule_start_picker">Hora de entrada</string>
     <string name="schedule_end_picker">Hora de salida</string>
-    <string name="schedule_invalid_range">La salida debe ser al menos 30 minutos después de la entrada.</string>
+    <string name="schedule_invalid_range_appointment">La salida debe ser al menos 30 minutos después de la entrada.</string>
     <string name="schedule_blocks_title">Horarios bloqueados</string>
     <string name="schedule_blocks_hint">Bloquea horas puntuales (comida, permisos…). No se ofrecen a los clientes.</string>
     <string name="schedule_blocks_empty">No hay horarios bloqueados.</string>
