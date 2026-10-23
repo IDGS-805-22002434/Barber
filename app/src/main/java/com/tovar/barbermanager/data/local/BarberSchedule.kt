@@ -3,7 +3,7 @@ package com.tovar.barbermanager.data.local
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
-
+import com.tovar.barbermanager.data.Scheduling
 
 @Entity(
     tableName = "barber_schedules",
@@ -16,4 +16,13 @@ data class BarberSchedule(
     val startMinutes: Int,
     val endMinutes: Int,
     val active: Boolean = true
-)
+) {
+    val startTime: String
+        get() = Scheduling.formatMinutes(startMinutes)
+
+    val endTime: String
+        get() = Scheduling.formatMinutes(endMinutes)
+
+    val slotDurationMinutes: Int
+        get() = Scheduling.SLOT_MINUTES
+}
