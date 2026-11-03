@@ -31,9 +31,9 @@ class HomeFragment : Fragment() {
 
     /** Acceso rápido a una sección; [sprint] indica en qué ciclo del plan se construye. */
     private data class QuickAction(
-        @DrawableRes val icon: Int,
-        @StringRes val title: Int,
-        @StringRes val subtitle: Int,
+        @param:DrawableRes val icon: Int,
+        @param:StringRes val title: Int,
+        @param:StringRes val subtitle: Int,
         val sprint: Int
     )
 
@@ -55,7 +55,7 @@ class HomeFragment : Fragment() {
         configureDashboardForRole()
         setupQuickActions()
 
-        binding.bookButton.setOnClickListener { showComingSprint(SPRINT_BOOKING) }
+        binding.bookButton.setOnClickListener { findNavController().navigate(R.id.bookFragment) }
         binding.logoutButton.setOnClickListener { confirmLogout() }
     }
 

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.tovar.barbermanager.server.AvailabilityTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-10-30T04:25:15.879Z" hostname="DESKTOP-G2DD373" time="0.125">
+  <properties/>
+  <testcase name="calcula el fin de turno a partir de la duracion" classname="com.tovar.barbermanager.server.AvailabilityTest" time="0.05"/>
+  <testcase name="el dia de la semana sigue la convencion de android" classname="com.tovar.barbermanager.server.AvailabilityTest" time="0.014"/>
+  <testcase name="los slots ocupados por citas desaparecen" classname="com.tovar.barbermanager.server.AvailabilityTest" time="0.03"/>
+  <testcase name="sin horario no hay disponibilidad" classname="com.tovar.barbermanager.server.AvailabilityTest" time="0.0"/>
+  <testcase name="buscarSlot exige la misma hora de inicio" classname="com.tovar.barbermanager.server.AvailabilityTest" time="0.002"/>
+  <testcase name="los bloqueos completos del dia anulan todo" classname="com.tovar.barbermanager.server.AvailabilityTest" time="0.003"/>
+  <testcase name="genera turnos completos del horario" classname="com.tovar.barbermanager.server.AvailabilityTest" time="0.002"/>
+  <testcase name="no ofrece turnos ya pasados cuando es hoy" classname="com.tovar.barbermanager.server.AvailabilityTest" time="0.002"/>
+  <testcase name="un bloqueo parcial solo quita lo solapado" classname="com.tovar.barbermanager.server.AvailabilityTest" time="0.003"/>
+  <testcase name="detecta citas en el pasado" classname="com.tovar.barbermanager.server.AvailabilityTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
