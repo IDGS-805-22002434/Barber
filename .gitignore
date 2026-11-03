@@ -13,3 +13,11 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Archivos generados y temporales
+.gradle/
+**/build/
+*.log
+build_errors.txt
+test_results.txt
+server_test.txt
