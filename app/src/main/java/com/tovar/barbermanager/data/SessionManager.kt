@@ -38,16 +38,9 @@ class SessionManager(context: Context) {
     val userRole: UserRole
         get() = UserRole.fromStorage(prefs.getString(KEY_ROLE, UserRole.CLIENTE.name))
 
-    fun saveSession(user: UserAccount, rememberMe: Boolean) {
-        prefs.edit()
-    val isAdmin: Boolean
-        get() = userRole == UserRole.ADMINISTRADOR
-
-    /** Token JWT de la API; null cuando la sesión es solo local (sin red). */
     val authToken: String?
         get() = prefs.getString(KEY_TOKEN, null)
 
-    /** true si el login se validó contra el servidor y no solo contra Room. */
     val isServerSession: Boolean
         get() = authToken != null
 
@@ -56,12 +49,6 @@ class SessionManager(context: Context) {
             prefs.getString(KEY_SERVER_URL, null) ?: ApiClient.DEFAULT_BASE_URL
         ) ?: ApiClient.DEFAULT_BASE_URL
 
-    /**
-     * Debe llamarse al iniciar la app para que las peticiones lleven el token.
-     * Si hay una sesión de servidor activa se conserva su URL (aunque el usuario
-     * haya configurado otra para el próximo login); sin token se usa la URL
-     * configurada. Así cambiar de servidor no cierra la sesión en curso.
-     */
     fun restoreApiSession() {
         val configuredUrl = serverUrl
         val token = prefs.getString(KEY_TOKEN, null)
@@ -100,23 +87,16 @@ class SessionManager(context: Context) {
         ApiClient.setToken(token)
     }
 
-    /**
-     * Guarda la URL para el próximo inicio de sesión sin cambiar la conexión
-     * activa, de modo que un error de escritura no deje la sesión apuntando a
-     * un servidor distinto. Devuelve false si la URL no es válida.
-     */
     fun saveServerUrl(url: String): Boolean {
         val normalized = ApiClient.normalizeBaseUrl(url) ?: return false
         prefs.edit().putString(KEY_SERVER_URL, normalized).apply()
         return true
     }
 
-    /** Mantiene el nombre local en sincronía tras editar el perfil en el servidor. */
     fun updateLocalName(nombre: String) {
         prefs.edit().putString(KEY_NAME, nombre).apply()
     }
 
-    /** Cierra la sesión pero conserva la URL del servidor configurada. */
     fun clear() {
         prefs.edit()
             .remove(KEY_ACTIVE_SESSION)
@@ -140,8 +120,6 @@ class SessionManager(context: Context) {
         const val KEY_EMAIL = "email"
         const val KEY_ROLE = "role"
         const val KEY_ACTIVE_EMAIL = "active_email"
-        const val KEY_NAME = "full_name"
-        const val KEY_ROLE = "user_role"
         const val KEY_TOKEN = "api_token"
         const val KEY_TOKEN_SERVER_URL = "api_token_server_url"
         const val KEY_SERVER_URL = "server_url"

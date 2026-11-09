@@ -64,7 +64,7 @@ class HomeFragment : Fragment() {
         setupQuickActions()
 
         observeNextAppointment()
-        binding.bookButton.setOnClickListener { findNavController().navigate(R.id.bookFragment) }
+        binding.bookButton.setOnClickListener { findNavController().navigate(R.id.action_home_to_booking) }
         binding.logoutButton.setOnClickListener { confirmLogout() }
         binding.promoCard.setOnClickListener { findNavController().navigate(R.id.promotionsFragment) }
     }

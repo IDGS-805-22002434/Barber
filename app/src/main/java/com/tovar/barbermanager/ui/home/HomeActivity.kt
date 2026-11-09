@@ -84,8 +84,6 @@ class HomeActivity : AppCompatActivity() {
             }
         }
 
-        // Mantiene resaltada la pestaña correcta aunque se llegue por otro camino
-        // (por ejemplo desde "Agendar cita" en Inicio). isChecked no dispara el listener.
         navController.addOnDestinationChangedListener { _, destination, _ ->
             val itemId = when (destination.id) {
                 R.id.appointmentsFragment, R.id.bookingFragment, R.id.receiptFragment ->
@@ -95,14 +93,6 @@ class HomeActivity : AppCompatActivity() {
                 else -> null
             }
             if (itemId != null) binding.bottomNav.menu.findItem(itemId)?.isChecked = true
-        // Mantiene el ítem correcto al navegar con accesos rápidos o al volver atrás.
-        navController.addOnDestinationChangedListener { _, destination, _ ->
-            val itemId = when (destination.id) {
-                R.id.appointmentsFragment -> R.id.nav_appointments
-                R.id.profileFragment -> R.id.nav_profile
-                else -> R.id.nav_home
-            }
-            binding.bottomNav.menu.findItem(itemId)?.isChecked = true
         }
     }
 

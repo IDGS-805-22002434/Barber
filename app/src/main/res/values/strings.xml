@@ -208,9 +208,6 @@
     <string name="error_specialty_exists">Ya existe una especialidad con ese nombre.</string>
 
     <!-- Mis citas / Agenda -->
-    <string name="appointments_title">Mis Citas</string>
-    <string name="appointments_subtitle">Gestiona tus reservas</string>
-    <string name="appointments_subtitle_admin">Agenda de la barbería</string>
     <string name="appointments_empty">Aún no tienes citas agendadas.</string>
     <string name="appointments_empty_admin">No hay citas registradas.</string>
     <string name="appointments_refresh">Actualizar lista</string>
@@ -234,17 +231,13 @@
     <string name="cita_reprogramada">Cita reprogramada.</string>
     <string name="cita_estado_actualizado">Estado actualizado.</string>
 
-    <string name="reschedule_title">Reprogramar cita</string>
-
     <!-- Agendar cita -->
-    <string name="booking_title">Agendar cita</string>
     <string name="booking_subtitle">Elige servicio, barbero y turno</string>
     <string name="booking_service_hint">Servicio</string>
     <string name="booking_barber_hint">Barbero</string>
     <string name="booking_notes_hint">Notas (opcional)</string>
     <string name="booking_slots_title">Horarios disponibles</string>
     <string name="booking_pick_date">Elegir fecha</string>
-    <string name="booking_confirm">Confirmar cita</string>
     <string name="booking_saving">Guardando…</string>
     <string name="booking_slots_hint">Selecciona barbero y fecha para ver horarios libres.</string>
     <string name="booking_slots_empty">No hay horarios libres para ese día.</string>
