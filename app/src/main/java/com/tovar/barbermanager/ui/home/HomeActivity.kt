@@ -21,6 +21,7 @@ class HomeActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         session = SessionManager(this)
+        session.restoreApiSession()
         if (!session.hasActiveSession) {
             startActivity(
                 Intent(this, LoginActivity::class.java)
@@ -71,6 +72,14 @@ class HomeActivity : AppCompatActivity() {
                     navController.navigate(R.id.promotionsFragment, null, options)
                     true
                 }
+                R.id.nav_profile -> {
+                    val options = androidx.navigation.NavOptions.Builder()
+                        .setPopUpTo(R.id.homeFragment, inclusive = false)
+                        .setLaunchSingleTop(true)
+                        .build()
+                    navController.navigate(R.id.profileFragment, null, options)
+                    true
+                }
                 else -> false
             }
         }
@@ -86,6 +95,14 @@ class HomeActivity : AppCompatActivity() {
                 else -> null
             }
             if (itemId != null) binding.bottomNav.menu.findItem(itemId)?.isChecked = true
+        // Mantiene el ítem correcto al navegar con accesos rápidos o al volver atrás.
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            val itemId = when (destination.id) {
+                R.id.appointmentsFragment -> R.id.nav_appointments
+                R.id.profileFragment -> R.id.nav_profile
+                else -> R.id.nav_home
+            }
+            binding.bottomNav.menu.findItem(itemId)?.isChecked = true
         }
     }
 
@@ -93,7 +110,6 @@ class HomeActivity : AppCompatActivity() {
         val menu = binding.bottomNav.menu
         if (session.isAdmin) {
             menu.findItem(R.id.nav_promos).isVisible = false
-            menu.findItem(R.id.nav_profile).isVisible = false
             menu.findItem(R.id.nav_appointments).title = getString(R.string.nav_all_appointments)
         }
     }

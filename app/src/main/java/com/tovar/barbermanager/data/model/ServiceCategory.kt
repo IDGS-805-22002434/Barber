@@ -4,7 +4,7 @@ import androidx.annotation.StringRes
 import com.tovar.barbermanager.R
 
 /** Catálogo fijo de categorías del catálogo de servicios. */
-enum class ServiceCategory(@StringRes val titleRes: Int) {
+enum class ServiceCategory(@param:StringRes val titleRes: Int) {
     CORTES(R.string.cat_cuts),
     BARBA(R.string.cat_beard),
     COMBOS(R.string.cat_combos),

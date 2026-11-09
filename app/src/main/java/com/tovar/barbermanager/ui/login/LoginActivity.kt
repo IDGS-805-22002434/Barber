@@ -42,6 +42,7 @@ class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         session = SessionManager(this)
+        session.restoreApiSession()
 
         // Solo se omite el login si se eligió "Recordarme" en una sesión autenticada.
         if (session.isLoggedIn) {
@@ -133,7 +134,7 @@ class LoginActivity : AppCompatActivity() {
                     authRepository.authenticate(email, password)
                 }) {
                     is LoginResult.Success -> {
-                        session.saveSession(result.user, binding.rememberCheck.isChecked)
+                        session.saveSession(result.user, binding.rememberCheck.isChecked, result.token)
                         openHome(result.user.email)
                     }
                     LoginResult.InvalidCredentials -> {
@@ -145,9 +146,9 @@ class LoginActivity : AppCompatActivity() {
                         showMessage(R.string.error_account_inactive)
                     }
                 }
-            } catch (_: Exception) {
+            } catch (error: Exception) {
                 setLoading(false)
-                showMessage(R.string.error_database)
+                showMessage(error.message ?: getString(R.string.error_database))
             }
         }
     }
@@ -207,7 +208,7 @@ class LoginActivity : AppCompatActivity() {
                             authRepository.registerClient(fullName, email, password)
                         }
                     } catch (_: Exception) {
-                        RegisterResult.Failed
+                        RegisterResult.Failed()
                     }
 
                     if (isFinishing) return@launch
@@ -222,8 +223,8 @@ class LoginActivity : AppCompatActivity() {
                             dialogBinding.registerEmailLayout.error = getString(R.string.error_email_exists)
                             dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = true
                         }
-                        RegisterResult.Failed -> {
-                            showMessage(R.string.error_database)
+                        is RegisterResult.Failed -> {
+                            showMessage(result.message ?: getString(R.string.error_database))
                             dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = true
                         }
                     }
@@ -290,6 +291,10 @@ class LoginActivity : AppCompatActivity() {
 
     private fun showMessage(messageRes: Int) {
         Snackbar.make(binding.root, messageRes, Snackbar.LENGTH_LONG).show()
+    }
+
+    private fun showMessage(message: String) {
+        Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG).show()
     }
 
     private fun hideKeyboard() {

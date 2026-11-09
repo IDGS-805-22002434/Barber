@@ -39,9 +39,9 @@ class HomeFragment : Fragment() {
     private lateinit var session: SessionManager
 
     private data class QuickAction(
-        @DrawableRes val icon: Int,
-        @StringRes val title: Int,
-        @StringRes val subtitle: Int,
+        @param:DrawableRes val icon: Int,
+        @param:StringRes val title: Int,
+        @param:StringRes val subtitle: Int,
         val sprint: Int
     )
 
@@ -64,6 +64,7 @@ class HomeFragment : Fragment() {
         setupQuickActions()
 
         observeNextAppointment()
+        binding.bookButton.setOnClickListener { findNavController().navigate(R.id.bookFragment) }
         binding.logoutButton.setOnClickListener { confirmLogout() }
         binding.promoCard.setOnClickListener { findNavController().navigate(R.id.promotionsFragment) }
     }
