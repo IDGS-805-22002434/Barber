@@ -9,6 +9,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
+import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
@@ -67,6 +68,15 @@ class BookingFragment : Fragment() {
         binding.dateInput.setOnClickListener { showDatePicker() }
         binding.dateLayout.setEndIconOnClickListener { showDatePicker() }
         binding.confirmButton.setOnClickListener { attemptConfirm() }
+        binding.applyCouponButton.setOnClickListener {
+            viewModel.applyCoupon(binding.couponInput.text?.toString().orEmpty())
+        }
+        binding.couponInput.doAfterTextChanged { text ->
+            val applied = viewModel.state.value.coupon
+            if (applied != null && !text.toString().trim().equals(applied.code, ignoreCase = true)) {
+                viewModel.removeCoupon()
+            }
+        }
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -146,6 +156,14 @@ class BookingFragment : Fragment() {
             binding.dateInput.setText(dateLabel)
         }
 
+        binding.couponLayout.error = state.couponError?.let { getString(it) }
+        val applied = state.coupon
+        binding.couponMessage.isVisible = applied != null
+        if (applied != null) {
+            binding.couponMessage.text =
+                getString(R.string.coupon_applied, applied.code, Format.price(state.discountCents))
+        }
+
         renderSlots(state)
         renderSummary(state)
     }
@@ -217,19 +235,23 @@ class BookingFragment : Fragment() {
         val date = state.date
         val time = state.time
 
-        val ready = serviceName != null && priceCents != null && barberName != null &&
-            date != null && time != null
-        binding.summaryCard.isVisible = ready
-        if (ready) {
-            binding.summaryText.text = getString(
-                R.string.booking_summary,
-                serviceName,
-                Format.price(priceCents!!),
-                barberName,
-                Dates.display(date!!),
-                time
-            )
+        if (serviceName == null || priceCents == null || barberName == null || date == null || time == null) {
+            binding.summaryCard.isVisible = false
+            return
         }
+
+        binding.summaryCard.isVisible = true
+        val discount = if (editing == null) state.discountCents else 0L
+        val base = getString(
+            R.string.booking_summary, serviceName, Format.price(priceCents),
+            barberName, Dates.display(date), time
+        )
+        binding.summaryText.text = if (discount > 0) {
+            base + "\n" + getString(
+                R.string.booking_summary_discount,
+                Format.price(discount), Format.price(priceCents - discount)
+            )
+        } else base
     }
 
     private fun attemptConfirm() {
@@ -270,6 +292,16 @@ class BookingFragment : Fragment() {
                     Snackbar.LENGTH_LONG
                 ).show()
                 findNavController().navigateUp()
+            }
+
+            BookingViewModel.Event.CouponRejected ->
+                Snackbar.make(binding.root, R.string.coupon_rejected, Snackbar.LENGTH_LONG).show()
+            BookingViewModel.Event.CouponRejected -> {
+                Snackbar.make(
+                    binding.root,
+                    R.string.coupon_err_not_applicable,
+                    Snackbar.LENGTH_LONG
+                ).show()
             }
         }
     }

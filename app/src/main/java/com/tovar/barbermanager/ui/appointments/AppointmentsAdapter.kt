@@ -47,7 +47,7 @@ class AppointmentsAdapter(
             dateTime.text = context.getString(
                 R.string.appt_date_time, Dates.displayShort(item.date), item.time
             )
-            price.text = Format.price(item.priceCents)
+            price.text = Format.price(item.priceCents - item.discountCents)
 
             statusBadge.setText(AppointmentUi.statusLabel(item))
             statusBadge.setTextColor(context.getColor(AppointmentUi.statusColor(item)))

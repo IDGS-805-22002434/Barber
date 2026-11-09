@@ -9,7 +9,6 @@ class SessionManager(context: Context) {
     private val prefs = context.applicationContext
         .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-    /** Solo se debe saltar el login al reabrir la aplicación si se eligió Recordarme. */
     val isLoggedIn: Boolean
         get() = prefs.getBoolean(KEY_ACTIVE_SESSION, false) && prefs.getBoolean(KEY_REMEMBER, false)
 

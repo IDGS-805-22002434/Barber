@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="promotions_title">Promociones</string>
+    <string name="promotions_subtitle">Cupones vigentes</string>
+    <string name="promotions_empty">Por ahora no hay promociones vigentes.</string>
+    <string name="promo_valid_until">Vigente hasta el %1$s</string>
+    <string name="promo_conditions">Condiciones: %1$s</string>
+    <string name="promo_discount_percent">%1$d%% de descuento</string>
+    <string name="promo_discount_amount">%1$s de descuento</string>
+    <string name="promo_code_label">Código: %1$s</string>
+    <string name="promo_copy">Copiar</string>
+    <string name="promo_code_copied">Código %1$s copiado</string>
+
+    <string name="hint_coupon">Cupón (opcional)</string>
+    <string name="coupon_apply">Aplicar</string>
+    <string name="coupon_applied">Cupón %1$s aplicado: -%2$s</string>
+    <string name="coupon_choose_service">Primero elige un servicio.</string>
+    <string name="coupon_err_not_found">El cupón no existe.</string>
+    <string name="coupon_err_inactive">El cupón está desactivado.</string>
+    <string name="coupon_err_not_started">El cupón aún no está vigente.</string>
+    <string name="coupon_err_expired">El cupón ya venció.</string>
+    <string name="coupon_err_exhausted">El cupón ya alcanzó su límite de usos.</string>
+    <string name="coupon_err_used">Ya usaste este cupón.</string>
+    <string name="coupon_err_not_applicable">El cupón no aplica para este servicio.</string>
+    <string name="coupon_rejected">El cupón ya no es válido. Revisa e intenta de nuevo.</string>
+    <string name="booking_summary_discount">Descuento: -%1$s\nTotal: %2$s</string>
+
+    <string name="receipt_price">Precio</string>
+    <string name="receipt_coupon">Cupón</string>
+    <string name="receipt_discount">Descuento</string>
+</resources>

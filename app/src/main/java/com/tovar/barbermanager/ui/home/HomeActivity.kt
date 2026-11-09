@@ -64,8 +64,12 @@ class HomeActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_promos -> {
-                    showComingSoon()
-                    false
+                    val options = androidx.navigation.NavOptions.Builder()
+                        .setPopUpTo(R.id.homeFragment, inclusive = false)
+                        .setLaunchSingleTop(true)
+                        .build()
+                    navController.navigate(R.id.promotionsFragment, null, options)
+                    true
                 }
                 else -> false
             }
@@ -78,6 +82,7 @@ class HomeActivity : AppCompatActivity() {
                 R.id.appointmentsFragment, R.id.bookingFragment, R.id.receiptFragment ->
                     R.id.nav_appointments
                 R.id.homeFragment -> R.id.nav_home
+                R.id.promotionsFragment -> R.id.nav_promos
                 else -> null
             }
             if (itemId != null) binding.bottomNav.menu.findItem(itemId)?.isChecked = true

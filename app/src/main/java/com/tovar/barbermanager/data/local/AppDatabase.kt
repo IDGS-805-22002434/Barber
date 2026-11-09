@@ -15,9 +15,10 @@ import kotlinx.coroutines.launch
     entities = [
         UserAccount::class, Service::class, Barber::class, Specialty::class, BarberSpecialty::class,
         Appointment::class, AppointmentHistory::class,
-        BarberSchedule::class, BlockedSlot::class
+        BarberSchedule::class, BlockedSlot::class,
+        Promotion::class, Coupon::class, CouponRedemption::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -30,6 +31,12 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun appointmentDao(): AppointmentDao
     abstract fun scheduleDao(): ScheduleDao
     abstract fun barberScheduleDao(): BarberScheduleDao
+
+    abstract fun promotionDao(): PromotionDao
+
+    abstract fun couponDao(): CouponDao
+
+    abstract fun couponRedemptionDao(): CouponRedemptionDao
 
     companion object {
         private const val DATABASE_NAME = "barbermanager.db"
@@ -128,6 +135,21 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `promotions` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `conditions` TEXT NOT NULL, `startsAt` INTEGER NOT NULL, `endsAt` INTEGER NOT NULL, `active` INTEGER NOT NULL)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `coupons` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `promotionId` INTEGER, `code` TEXT NOT NULL, `discountType` TEXT NOT NULL, `discountValue` INTEGER NOT NULL, `conditions` TEXT NOT NULL, `serviceCategory` TEXT, `minPriceCents` INTEGER NOT NULL, `startsAt` INTEGER NOT NULL, `endsAt` INTEGER NOT NULL, `maxUses` INTEGER, `currentUses` INTEGER NOT NULL, `active` INTEGER NOT NULL, FOREIGN KEY(`promotionId`) REFERENCES `promotions`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL)")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_coupons_code` ON `coupons` (`code`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_coupons_promotionId` ON `coupons` (`promotionId`)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `coupon_redemptions` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `couponId` INTEGER NOT NULL, `userId` INTEGER NOT NULL, `appointmentId` INTEGER, `discountCents` INTEGER NOT NULL, `appliedAt` INTEGER NOT NULL, FOREIGN KEY(`couponId`) REFERENCES `coupons`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`userId`) REFERENCES `users`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`appointmentId`) REFERENCES `appointments`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_coupon_redemptions_couponId` ON `coupon_redemptions` (`couponId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_coupon_redemptions_userId` ON `coupon_redemptions` (`userId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_coupon_redemptions_appointmentId` ON `coupon_redemptions` (`appointmentId`)")
+                db.execSQL("ALTER TABLE `appointments` ADD COLUMN `couponCode` TEXT")
+                db.execSQL("ALTER TABLE `appointments` ADD COLUMN `discountCents` INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         private fun createBookingTables(db: SupportSQLiteDatabase) {
             db.execSQL("DROP TABLE IF EXISTS `appointments`")
             db.execSQL(
@@ -208,7 +230,7 @@ abstract class AppDatabase : RoomDatabase() {
 
         private fun build(context: Context): AppDatabase {
             val db = Room.databaseBuilder(context, AppDatabase::class.java, DATABASE_NAME)
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_4, MIGRATION_3_4, MIGRATION_4_5)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_4, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                 .fallbackToDestructiveMigration()
                 .build()
             CoroutineScope(Dispatchers.IO).launch {
@@ -224,6 +246,9 @@ abstract class AppDatabase : RoomDatabase() {
                 if (db.barberDao().specialtyLinkCount() == 0) {
                     seedSpecialtyLinks(db)
                 }
+                if (db.promotionDao().count() == 0) {
+                    seedPromotions(db)
+                }
             }
             return db
         }
@@ -237,9 +262,36 @@ abstract class AppDatabase : RoomDatabase() {
                     specialtiesByName[specialtyName]?.id?.let { BarberSpecialty(barberId, it) }
                 }
             }
+
             if (links.isNotEmpty()) {
                 db.barberDao().insertBarberSpecialties(links)
             }
+
         }
+        private suspend fun seedPromotions(db: AppDatabase) {
+            val now = System.currentTimeMillis()
+            val year = 365L * 24 * 60 * 60 * 1000
+            val p1 = db.promotionDao().insert(Promotion(
+                title = "Tu primer corte con 15% de descuento",
+                description = "Estrena la barbería con 15% de descuento en cualquier corte.",
+                conditions = "Solo servicios de la categoría Cortes. Un uso por cliente.",
+                startsAt = now, endsAt = now + year))
+            db.couponDao().insert(Coupon(
+                promotionId = p1, code = "BIENVENIDO15",
+                discountType = DiscountType.PERCENT, discountValue = 15,
+                conditions = "Solo cortes", serviceCategory = "CORTES",
+                startsAt = now, endsAt = now + year))
+            val p2 = db.promotionDao().insert(Promotion(
+                title = "Barba con \$20 de descuento",
+                description = "Descuento fijo en servicios de barba.",
+                conditions = "Servicios de barba de \$70 o más. Un uso por cliente.",
+                startsAt = now, endsAt = now + year))
+            db.couponDao().insert(Coupon(
+                promotionId = p2, code = "BARBA20",
+                discountType = DiscountType.AMOUNT_CENTS, discountValue = 2_000,
+                conditions = "Solo barba", serviceCategory = "BARBA", minPriceCents = 7_000,
+                startsAt = now, endsAt = now + year, maxUses = 50))
+        }
+
     }
 }

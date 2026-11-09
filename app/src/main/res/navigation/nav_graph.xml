@@ -141,4 +141,8 @@
         android:id="@+id/specialtiesFragment"
         android:name="com.tovar.barbermanager.ui.specialties.SpecialtiesFragment"
         android:label="@string/specialties_title" />
+    <fragment
+        android:id="@+id/promotionsFragment"
+        android:name="com.tovar.barbermanager.ui.promotions.PromotionsFragment"
+        android:label="@string/promotions_title" />
 </navigation>

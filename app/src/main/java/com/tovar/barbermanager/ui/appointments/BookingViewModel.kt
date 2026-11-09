@@ -3,14 +3,18 @@ package com.tovar.barbermanager.ui.appointments
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.tovar.barbermanager.R
 import com.tovar.barbermanager.data.AppointmentRepository
 import com.tovar.barbermanager.data.BarberRepository
 import com.tovar.barbermanager.data.BookingResult
+import com.tovar.barbermanager.data.CouponCheck
+import com.tovar.barbermanager.data.PromotionRepository
 import com.tovar.barbermanager.data.ServiceRepository
 import com.tovar.barbermanager.data.SessionManager
 import com.tovar.barbermanager.data.local.AppDatabase
 import com.tovar.barbermanager.data.local.Appointment
 import com.tovar.barbermanager.data.local.Barber
+import com.tovar.barbermanager.data.local.Coupon
 import com.tovar.barbermanager.data.local.Service
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -28,7 +32,7 @@ data class BookingState(
     val services: List<Service> = emptyList(),
     val barbers: List<Barber> = emptyList(),
     val service: Service? = null,
-    val barber: Barber? = null,
+    val barber : Barber? = null,
 
     val date: String? = null,
     val slots: List<String> = emptyList(),
@@ -37,6 +41,9 @@ data class BookingState(
     val time: String? = null,
 
     val editing: Appointment? = null,
+    val coupon: Coupon? = null,
+    val discountCents: Long = 0L,
+    val couponError: Int? = null,
     val defaultName: String = ""
 ) {
     val barberId: Long? get() = editing?.barberId ?: barber?.id
@@ -46,6 +53,7 @@ class BookingViewModel(application: Application) : AndroidViewModel(application)
 
     private val database = AppDatabase.getInstance(application)
     private val repository = AppointmentRepository(database)
+    private val promotions = PromotionRepository(database)
     private val session = SessionManager(application)
 
     private val _state = MutableStateFlow(BookingState())
@@ -55,6 +63,7 @@ class BookingViewModel(application: Application) : AndroidViewModel(application)
         data class Saved(val appointmentId: Long) : Event
         object SlotTaken : Event
         object NotAllowed : Event
+        object CouponRejected : Event
     }
 
     private val _events = Channel<Event>(Channel.BUFFERED)
@@ -89,7 +98,7 @@ class BookingViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun selectService(service: Service) {
-        _state.update { it.copy(service = service) }
+        _state.update { it.copy(service = service, coupon = null, discountCents = 0L, couponError = null) }
     }
 
     fun selectBarber(barber: Barber) {
@@ -105,6 +114,8 @@ class BookingViewModel(application: Application) : AndroidViewModel(application)
     fun selectTime(time: String) {
         _state.update { it.copy(time = time) }
     }
+
+
 
     fun confirm(name: String, phone: String) {
         val current = _state.value
@@ -132,7 +143,9 @@ class BookingViewModel(application: Application) : AndroidViewModel(application)
                             priceCents = service.priceCents,
                             date = date,
                             time = time
-                        )
+                        ),
+                        couponCode = current.coupon?.code,
+                        userId = session.userId
                     )
                 }
                 when (result) {
@@ -143,6 +156,10 @@ class BookingViewModel(application: Application) : AndroidViewModel(application)
                         _events.send(Event.SlotTaken)
                     }
                     BookingResult.NotAllowed -> _events.send(Event.NotAllowed)
+                    BookingResult.CouponRejected -> {
+                        _state.update { it.copy(coupon = null, discountCents = 0L) }
+                        _events.send(Event.CouponRejected)
+                    }
                 }
             } finally {
                 saving = false
@@ -169,6 +186,39 @@ class BookingViewModel(application: Application) : AndroidViewModel(application)
                 )
             }
         }
+    }
+
+    fun applyCoupon(code: String) {
+        val service = _state.value.service
+        if (service == null) {
+            _state.update { it.copy(couponError = R.string.coupon_choose_service) }
+            return
+        }
+        viewModelScope.launch {
+            when (val r = promotions.validate(code, service, session.userId)) {
+                is CouponCheck.Valid -> _state.update {
+                    it.copy(coupon = r.coupon, discountCents = r.discountCents, couponError = null)
+                }
+                else -> _state.update {
+                    it.copy(coupon = null, discountCents = 0L, couponError = couponErrorRes(r))
+                }
+            }
+        }
+    }
+
+    fun removeCoupon() {
+        _state.update { it.copy(coupon = null, discountCents = 0L, couponError = null) }
+    }
+
+    private fun couponErrorRes(check: CouponCheck): Int = when (check) {
+        CouponCheck.NotFound -> R.string.coupon_err_not_found
+        CouponCheck.Inactive -> R.string.coupon_err_inactive
+        CouponCheck.NotStarted -> R.string.coupon_err_not_started
+        CouponCheck.Expired -> R.string.coupon_err_expired
+        CouponCheck.Exhausted -> R.string.coupon_err_exhausted
+        CouponCheck.AlreadyUsed -> R.string.coupon_err_used
+        CouponCheck.NotApplicable -> R.string.coupon_err_not_applicable
+        is CouponCheck.Valid -> R.string.coupon_err_not_found
     }
 
     private fun nameFromEmail(email: String?): String =

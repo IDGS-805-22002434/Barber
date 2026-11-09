@@ -65,6 +65,7 @@ class HomeFragment : Fragment() {
 
         observeNextAppointment()
         binding.logoutButton.setOnClickListener { confirmLogout() }
+        binding.promoCard.setOnClickListener { findNavController().navigate(R.id.promotionsFragment) }
     }
 
     override fun onDestroyView() {
@@ -160,6 +161,7 @@ class HomeFragment : Fragment() {
             SPRINT_SPECIALTIES -> findNavController().navigate(R.id.specialtiesFragment)
             SPRINT_SCHEDULES -> findNavController().navigate(R.id.schedulesFragment)
             SPRINT_BOOKING -> findNavController().navigate(R.id.appointmentsFragment)
+            SPRINT_LOYALTY -> findNavController().navigate(R.id.promotionsFragment)
             else -> showComingSprint(action.sprint)
         }
     }

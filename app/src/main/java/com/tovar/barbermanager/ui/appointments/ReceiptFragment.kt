@@ -114,7 +114,12 @@ class ReceiptFragment : Fragment() {
         addRow(R.string.receipt_barber, appointment.barberName)
         addRow(R.string.receipt_date, Dates.display(appointment.date))
         addRow(R.string.receipt_time, appointment.time)
-        addRow(R.string.receipt_total, Format.price(appointment.priceCents))
+        if (appointment.discountCents > 0) {
+            addRow(R.string.receipt_price, Format.price(appointment.priceCents))
+            addRow(R.string.receipt_coupon, appointment.couponCode.orEmpty())
+            addRow(R.string.receipt_discount, "-" + Format.price(appointment.discountCents))
+        }
+        addRow(R.string.receipt_total, Format.price(appointment.priceCents - appointment.discountCents))
         addRow(R.string.receipt_status, getString(AppointmentUi.statusLabel(appointment)))
 
         binding.historySection.isVisible = history.isNotEmpty()
@@ -153,7 +158,7 @@ class ReceiptFragment : Fragment() {
             appointment.barberName,
             Dates.display(appointment.date),
             appointment.time,
-            Format.price(appointment.priceCents),
+            Format.price(appointment.priceCents - appointment.discountCents),
             getString(AppointmentUi.statusLabel(appointment))
         )
         val send = Intent(Intent.ACTION_SEND)

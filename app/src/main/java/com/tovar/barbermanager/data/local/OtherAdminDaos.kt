@@ -31,6 +31,9 @@ interface PromotionDao {
     @Update suspend fun update(promotion: Promotion)
     @Query("UPDATE promotions SET active = :active WHERE id = :id")
     suspend fun setActive(id: Long, active: Boolean)
+
+    @Query("SELECT COUNT(*) FROM promotions")
+    suspend fun count(): Int
 }
 
 @Dao
@@ -43,6 +46,10 @@ interface CouponDao {
     @Update suspend fun update(coupon: Coupon)
     @Query("UPDATE coupons SET active = :active WHERE id = :id")
     suspend fun setActive(id: Long, active: Boolean)
+    @Query("SELECT COUNT(*) FROM coupons")
+    suspend fun count(): Int
+    @Query("UPDATE coupons SET currentUses = currentUses + 1 WHERE id = :id AND (maxUses IS NULL OR currentUses < maxUses)")
+    suspend fun incrementUses(id: Long): Int
 }
 
 @Dao
@@ -50,6 +57,8 @@ interface CouponRedemptionDao {
     @Query("SELECT * FROM coupon_redemptions WHERE userId = :userId ORDER BY appliedAt DESC")
     fun observeForUser(userId: Long): Flow<List<CouponRedemption>>
     @Insert suspend fun insert(redemption: CouponRedemption): Long
+    @Query("SELECT COUNT(*) FROM coupon_redemptions WHERE couponId = :couponId AND userId = :userId")
+    suspend fun countForUser(couponId: Long, userId: Long): Int
 }
 
 @Dao

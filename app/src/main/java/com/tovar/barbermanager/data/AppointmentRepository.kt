@@ -5,6 +5,8 @@ import com.tovar.barbermanager.data.local.AppDatabase
 import com.tovar.barbermanager.data.local.Appointment
 import com.tovar.barbermanager.data.local.AppointmentHistory
 import com.tovar.barbermanager.data.local.AppointmentStatus
+import com.tovar.barbermanager.data.local.Coupon
+import com.tovar.barbermanager.data.local.CouponRedemption
 import com.tovar.barbermanager.data.local.HistoryAction
 import kotlinx.coroutines.flow.Flow
 
@@ -17,6 +19,9 @@ sealed interface BookingResult {
 
     /** La política de la barbería no permite el cambio, o la cita ya no existe. */
     object NotAllowed : BookingResult
+
+    /** El cupón dejó de ser válido al confirmar. */
+    object CouponRejected : BookingResult
 }
 
 /**
@@ -39,19 +44,43 @@ class AppointmentRepository(private val db: AppDatabase) {
     suspend fun history(appointmentId: Long): List<AppointmentHistory> =
         appointments.history(appointmentId)
 
-    /** Horarios libres de un barbero en una fecha (RF04, RF04.01, RF04.02). */
     suspend fun freeSlots(barberId: Long, date: String): List<String> =
         computeFreeSlots(barberId, date)
 
-    suspend fun book(appointment: Appointment): BookingResult = db.withTransaction {
+    suspend fun book(
+        appointment: Appointment,
+        couponCode: String? = null,
+        userId: Long = 0L
+    ): BookingResult = db.withTransaction {
         if (appointment.time !in computeFreeSlots(appointment.barberId, appointment.date)) {
-            BookingResult.SlotUnavailable
-        } else {
-            val id = appointments.insert(
-                appointment.copy(id = 0L, status = AppointmentStatus.CONFIRMADA)
-            )
-            BookingResult.Success(id)
+            return@withTransaction BookingResult.SlotUnavailable
         }
+        var toSave = appointment.copy(id = 0L, status = AppointmentStatus.CONFIRMADA)
+        var coupon: Coupon? = null
+        if (!couponCode.isNullOrBlank()) {
+            val service = db.serviceDao().getById(appointment.serviceId)
+                ?: return@withTransaction BookingResult.CouponRejected
+            val check = PromotionRepository(db).validate(couponCode, service, userId)
+            if (check !is CouponCheck.Valid) return@withTransaction BookingResult.CouponRejected
+            // Reserva el uso antes de insertar la cita (evita pasarse de maxUses).
+            if (db.couponDao().incrementUses(check.coupon.id) == 0) {
+                return@withTransaction BookingResult.CouponRejected
+            }
+            coupon = check.coupon
+            toSave = toSave.copy(couponCode = coupon.code, discountCents = check.discountCents)
+        }
+        val id = appointments.insert(toSave)
+        if (coupon != null) {
+            db.couponRedemptionDao().insert(
+                CouponRedemption(
+                    couponId = coupon.id,
+                    userId = userId,
+                    appointmentId = id,
+                    discountCents = toSave.discountCents
+                )
+            )
+        }
+        BookingResult.Success(id)
     }
 
     suspend fun reschedule(

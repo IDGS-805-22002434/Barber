@@ -21,13 +21,20 @@ data class Coupon(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
     val promotionId: Long? = null,
     val code: String,
-    /** PERCENT o AMOUNT_CENTS. */
     val discountType: String,
     val discountValue: Long,
     val conditions: String = "",
+    val serviceCategory: String? = null,
+    val minPriceCents: Long = 0L,
     val startsAt: Long,
     val endsAt: Long,
     val maxUses: Int? = null,
     val currentUses: Int = 0,
-    val active: Boolean = true
+    val active: Boolean = true,
+
 )
+
+object DiscountType {
+    const val PERCENT = "PERCENT"
+    const val AMOUNT_CENTS = "AMOUNT_CENTS"
+}

@@ -3,6 +3,7 @@ package com.tovar.barbermanager.data.local
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import androidx.room.ColumnInfo
 
 /** Estados de una cita. */
 object AppointmentStatus {
@@ -11,11 +12,6 @@ object AppointmentStatus {
     const val CANCELADA = "CANCELADA"
 }
 
-/**
- * Cita registrada (RF05.02). Guarda el nombre del servicio y del barbero tal como
- * estaban al agendar, para que el comprobante no cambie si luego se editan.
- * Fecha "yyyy-MM-dd" y hora "HH:mm".
- */
 @Entity(
     tableName = "appointments",
     indices = [
@@ -36,5 +32,7 @@ data class Appointment(
     val date: String,
     val time: String,
     val status: String = AppointmentStatus.CONFIRMADA,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val couponCode: String? = null,
+    @ColumnInfo(defaultValue = "0") val discountCents: Long = 0L
 )
