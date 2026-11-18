@@ -62,6 +62,15 @@
         android:scaleType="fitXY"
         android:src="@drawable/pole_ribbon" />
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/usage_button"
+        style="@style/Widget.Material3.Button.TextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:layout_marginEnd="12dp"
+        android:text="@string/promo_usage_button" />
+
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -75,7 +84,7 @@
             android:gravity="center"
             android:paddingStart="24dp"
             android:paddingEnd="24dp"
-            android:text="@string/specialties_empty"
+            android:text="@string/promotions_empty"
             android:textColor="@color/text_secondary"
             android:textSize="15sp"
             android:visibility="gone"
@@ -92,6 +101,16 @@
             android:paddingBottom="88dp"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             tools:listitem="@layout/item_promotion" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/add_promotion_fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="20dp"
+            android:contentDescription="@string/promo_add"
+            android:src="@drawable/ic_add"
+            android:visibility="gone" />
 
     </FrameLayout>
 </LinearLayout>

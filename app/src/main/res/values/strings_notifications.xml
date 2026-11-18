@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Notificaciones (RF07) -->
+    <string name="nav_notifications">Avisos</string>
+    <string name="notifications_title">Notificaciones</string>
+    <string name="notifications_subtitle">Confirmaciones, cambios y recordatorios de tus citas.</string>
+    <string name="notifications_subtitle_admin">Registro de notificaciones generadas y su estado.</string>
+    <string name="notifications_empty">Aún no tienes notificaciones.</string>
+    <string name="notifications_empty_admin">Todavía no se generó ninguna notificación.</string>
+    <string name="notifications_mark_read">Marcar todas como leídas</string>
+    <string name="notif_status_pending">Pendiente</string>
+    <string name="notif_status_sent">Enviada</string>
+    <string name="notif_status_failed">Fallida</string>
+    <string name="notif_failed_hint">No se pudo mostrar en el dispositivo. Activa las notificaciones de BarberManager en Ajustes.</string>
+    <string name="notif_recipient">Para: %1$s</string>
+    <string name="notif_permission_denied">Sin permiso de notificaciones no recibirás avisos ni recordatorios de tus citas.</string>
+    <string name="notif_permission_action">Ajustes</string>
+
+    <string name="notif_channel_name">Citas y recordatorios</string>
+    <string name="notif_channel_desc">Confirmaciones, cambios, cancelaciones y recordatorios de citas.</string>
+    <string name="notif_confirmed_title">Cita confirmada</string>
+    <string name="notif_confirmed_msg">%1$s con %2$s el %3$s a las %4$s.</string>
+    <string name="notif_rescheduled_title">Cita reprogramada</string>
+    <string name="notif_rescheduled_msg">Tu cita de %1$s con %2$s ahora es el %3$s a las %4$s.</string>
+    <string name="notif_cancelled_title">Cita cancelada</string>
+    <string name="notif_cancelled_msg">Se canceló tu cita de %1$s del %2$s a las %3$s.</string>
+    <string name="notif_completed_title">Servicio registrado</string>
+    <string name="notif_completed_msg">Gracias por visitarnos. Tu servicio de %1$s quedó en tu historial.</string>
+    <string name="notif_reminder_day_title">Recordatorio: tu cita es mañana</string>
+    <string name="notif_reminder_hour_title">Recordatorio: tu cita es en 1 hora</string>
+    <string name="notif_reminder_msg">%1$s con %2$s el %3$s a las %4$s.</string>
+
+    <string name="qa_notifications">Avisos</string>
+    <string name="qa_notifications_desc">Recordatorios y cambios de tus citas</string>
+    <string name="qa_notifications_admin">Notificaciones</string>
+    <string name="qa_notifications_admin_desc">Registro y estado de envío</string>
+    <string name="qa_promos_admin">Promociones</string>
+    <string name="qa_promos_admin_desc">Crear promociones y cupones</string>
+</resources>

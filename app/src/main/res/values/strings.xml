@@ -21,9 +21,9 @@
     <string name="error_password_short">La contraseña debe tener al menos %1$d caracteres.</string>
 
     <string name="forgot_title">Recupera tu contraseña</string>
-    <string name="forgot_message">La recuperación por correo requiere un servidor capaz de validar la cuenta y enviar un enlace seguro. Ese servicio aún no está configurado en esta versión local.</string>
-    <string name="forgot_send">Enviar enlace</string>
-    <string name="forgot_sent">Si el correo está registrado, recibirás un enlace en unos minutos.</string>
+    <string name="forgot_message">Escribe tu correo registrado. Te enviaremos un código de 6 dígitos para elegir una contraseña nueva.</string>
+    <string name="forgot_send">Enviar código</string>
+    <string name="forgot_sent">Si el correo está registrado, recibirás un código en unos minutos.</string>
     <string name="action_cancel">Cancelar</string>
 
     <string name="msg_google_soon">El inicio con Google se conecta en el Sprint 1, junto con el backend.</string>

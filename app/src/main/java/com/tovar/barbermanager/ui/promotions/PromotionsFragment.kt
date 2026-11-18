@@ -39,7 +39,18 @@ class PromotionsFragment : Fragment() {
         applyInsets()
         binding.backButton.setOnClickListener { findNavController().navigateUp() }
 
-        val adapter = PromotionAdapter(onCopy = { copyCode(it) })
+        val isAdmin = viewModel.isAdmin
+        binding.addPromotionFab.isVisible = isAdmin
+        binding.addPromotionFab.setOnClickListener { openForm(0L) }
+        binding.usageButton.setOnClickListener {
+            findNavController().navigate(R.id.action_promotions_to_usage)
+        }
+
+        val adapter = PromotionAdapter(
+            onCopy = { copyCode(it) },
+            adminMode = isAdmin,
+            onEdit = { openForm(it.promotion.id) }
+        )
         binding.promotionsList.adapter = adapter
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -50,6 +61,13 @@ class PromotionsFragment : Fragment() {
                 }
             }
         }
+    }
+
+    private fun openForm(promotionId: Long) {
+        findNavController().navigate(
+            R.id.action_promotions_to_form,
+            Bundle().apply { putLong("promotionId", promotionId) }
+        )
     }
 
     private fun copyCode(code: String) {

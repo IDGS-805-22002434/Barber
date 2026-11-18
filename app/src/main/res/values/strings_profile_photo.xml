@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="cd_profile_photo">Foto de perfil</string>
+    <string name="profile_photo_change">Cambiar foto</string>
+    <string name="profile_photo_remove">Quitar foto</string>
+    <string name="profile_photo_saved">Foto de perfil actualizada.</string>
+    <string name="profile_photo_removed">Foto de perfil eliminada.</string>
+    <string name="profile_photo_error">No se pudo usar esa imagen. Elige otra.</string>
+    <string name="profile_photo_adjust_title">Ajusta tu foto</string>
+    <string name="profile_photo_adjust_hint">Arrastra la imagen para centrar tu cara y acércala con dos dedos o con el control.</string>
+    <string name="profile_photo_zoom">Acercar</string>
+    <string name="profile_photo_save">Guardar foto</string>
+</resources>

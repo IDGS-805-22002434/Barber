@@ -26,11 +26,15 @@ import com.tovar.barbermanager.data.SessionManager
 import com.tovar.barbermanager.data.local.AppDatabase
 import com.tovar.barbermanager.data.local.Appointment
 import com.tovar.barbermanager.data.local.AppointmentStatus
+import com.tovar.barbermanager.data.notifications.FcmTokenManager
 import com.tovar.barbermanager.databinding.FragmentHomeBinding
 import com.tovar.barbermanager.databinding.ItemQuickActionBinding
 import com.tovar.barbermanager.ui.login.LoginActivity
 import java.util.Calendar
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 class HomeFragment : Fragment() {
 
@@ -125,14 +129,17 @@ class HomeFragment : Fragment() {
                 QuickAction(R.drawable.ic_person, R.string.qa_barbers, R.string.qa_barbers_admin_desc, SPRINT_BARBERS),
                 QuickAction(R.drawable.ic_person, R.string.qa_specialties, R.string.qa_specialties_desc, SPRINT_SPECIALTIES),
                 QuickAction(R.drawable.ic_calendar, R.string.qa_schedules, R.string.qa_schedules_desc, SPRINT_SCHEDULES),
-                QuickAction(R.drawable.ic_calendar, R.string.qa_manage_appointments, R.string.qa_manage_appointments_desc, SPRINT_BOOKING)
+                QuickAction(R.drawable.ic_calendar, R.string.qa_manage_appointments, R.string.qa_manage_appointments_desc, SPRINT_BOOKING),
+                QuickAction(R.drawable.ic_offer, R.string.qa_promos_admin, R.string.qa_promos_admin_desc, SPRINT_LOYALTY),
+                QuickAction(R.drawable.ic_bell, R.string.qa_notifications_admin, R.string.qa_notifications_admin_desc, SPRINT_NOTIFICATIONS)
             )
         } else {
             listOf(
                 QuickAction(R.drawable.ic_scissors, R.string.qa_services, R.string.qa_services_desc, SPRINT_CATALOG),
                 QuickAction(R.drawable.ic_person, R.string.qa_barbers, R.string.qa_barbers_desc, SPRINT_BARBERS),
                 QuickAction(R.drawable.ic_calendar, R.string.qa_appointments, R.string.qa_appointments_desc, SPRINT_BOOKING),
-                QuickAction(R.drawable.ic_offer, R.string.qa_promos, R.string.qa_promos_desc, SPRINT_LOYALTY)
+                QuickAction(R.drawable.ic_offer, R.string.qa_promos, R.string.qa_promos_desc, SPRINT_LOYALTY),
+                QuickAction(R.drawable.ic_bell, R.string.qa_notifications, R.string.qa_notifications_desc, SPRINT_NOTIFICATIONS)
             )
         }
         val margin = (6 * resources.displayMetrics.density).toInt()
@@ -163,6 +170,7 @@ class HomeFragment : Fragment() {
             SPRINT_SCHEDULES -> findNavController().navigate(R.id.schedulesFragment)
             SPRINT_BOOKING -> findNavController().navigate(R.id.appointmentsFragment)
             SPRINT_LOYALTY -> findNavController().navigate(R.id.promotionsFragment)
+            SPRINT_NOTIFICATIONS -> findNavController().navigate(R.id.notificationsFragment)
             else -> showComingSprint(action.sprint)
         }
     }
@@ -218,13 +226,34 @@ class HomeFragment : Fragment() {
             .setMessage(R.string.logout_message)
             .setNegativeButton(R.string.action_cancel, null)
             .setPositiveButton(R.string.logout_confirm) { _, _ ->
-                session.clear()
-                val intent = Intent(requireContext(), LoginActivity::class.java)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                startActivity(intent)
-                requireActivity().finish()
+                finishSession()
             }
             .show()
+    }
+
+    /** Da de baja el dispositivo en FCM (RF07.04), cierra la sesión y vuelve al login (RF01.04). */
+    private fun finishSession() {
+        val appContext = requireContext().applicationContext
+        val email = session.currentEmail
+        val activity = requireActivity()
+        viewLifecycleOwner.lifecycleScope.launch {
+            if (!email.isNullOrBlank()) {
+                withTimeoutOrNull(3_000) {
+                    withContext(Dispatchers.IO) {
+                        try {
+                            FcmTokenManager.unregister(appContext, email)
+                        } catch (_: Exception) {
+                            // El cierre de sesión no depende de la baja del dispositivo.
+                        }
+                    }
+                }
+            }
+            session.clear()
+            val intent = Intent(appContext, LoginActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            activity.startActivity(intent)
+            activity.finish()
+        }
     }
 
     private companion object {
@@ -234,5 +263,6 @@ class HomeFragment : Fragment() {
         const val SPRINT_LOYALTY = 4
         const val SPRINT_SPECIALTIES = 5
         const val SPRINT_SCHEDULES = 6
+        const val SPRINT_NOTIFICATIONS = 7
     }
 }

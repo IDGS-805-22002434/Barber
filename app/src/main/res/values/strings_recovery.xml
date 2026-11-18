@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Recuperación de contraseña (RF01.03) -->
+    <string name="recovery_account_not_found">No encontramos una cuenta con ese correo.</string>
+    <string name="recovery_reset_title">Nueva contraseña</string>
+    <string name="recovery_reset_message">Escribe el código de 6 dígitos que enviamos a %1$s y elige tu nueva contraseña. El código vence en 15 minutos.</string>
+    <string name="recovery_reset_button">Cambiar contraseña</string>
+    <string name="recovery_code_hint">Código de 6 dígitos</string>
+    <string name="recovery_code_invalid">El código tiene 6 números.</string>
+    <string name="recovery_code_wrong">El código es incorrecto.</string>
+    <string name="recovery_code_expired">El código venció. Solicita uno nuevo.</string>
+    <string name="recovery_too_many">Demasiados intentos. Solicita un código nuevo.</string>
+    <string name="recovery_success">Contraseña actualizada. Ya puedes iniciar sesión.</string>
+    <string name="recovery_fallback_code">Sin conexión con el servidor y sin permiso para notificaciones. Tu código es %1$s.</string>
+    <string name="recovery_notif_title">Código de recuperación</string>
+    <string name="recovery_notif_message">Tu código para cambiar la contraseña es %1$s. Vence en 15 minutos.</string>
+</resources>

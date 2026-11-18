@@ -21,12 +21,17 @@ import com.google.android.material.snackbar.Snackbar
 import com.tovar.barbermanager.R
 import com.tovar.barbermanager.data.AuthRepository
 import com.tovar.barbermanager.data.LoginResult
+import com.tovar.barbermanager.data.PasswordRecovery
+import com.tovar.barbermanager.data.PasswordResetPolicy
+import com.tovar.barbermanager.data.RecoveryRequest
 import com.tovar.barbermanager.data.RegisterResult
+import com.tovar.barbermanager.data.ResetResult
 import com.tovar.barbermanager.data.SessionManager
 import com.tovar.barbermanager.data.local.AppDatabase
 import com.tovar.barbermanager.databinding.ActivityLoginBinding
 import com.tovar.barbermanager.databinding.DialogForgotPasswordBinding
 import com.tovar.barbermanager.databinding.DialogRegisterBinding
+import com.tovar.barbermanager.databinding.DialogResetPasswordBinding
 import com.tovar.barbermanager.ui.home.HomeActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -38,6 +43,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
     private lateinit var session: SessionManager
     private lateinit var authRepository: AuthRepository
+    private lateinit var recovery: PasswordRecovery
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,6 +62,7 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
         authRepository = AuthRepository(AppDatabase.getInstance(applicationContext).userDao())
+        recovery = PasswordRecovery(applicationContext, authRepository)
 
         applyInsets()
         setupListeners()
@@ -250,15 +257,119 @@ class LoginActivity : AppCompatActivity() {
             .create()
 
         dialog.setOnShowListener {
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            positive.setOnClickListener {
                 val email = dialogBinding.forgotEmailInput.text?.toString()?.trim().orEmpty()
                 val error = emailError(email)
                 if (error != null) {
                     dialogBinding.forgotEmailLayout.error = error
-                } else {
-                    // No se simula el envío: no hay servidor ni proveedor de correo configurado.
-                    dialog.dismiss()
-                    showMessage(R.string.forgot_backend_unavailable)
+                    return@setOnClickListener
+                }
+                positive.isEnabled = false
+                lifecycleScope.launch {
+                    val result = try {
+                        withContext(Dispatchers.IO) { recovery.request(email) }
+                    } catch (error: Exception) {
+                        RecoveryRequest.Failed(error.message ?: getString(R.string.error_database))
+                    }
+                    if (isFinishing) return@launch
+                    positive.isEnabled = true
+                    when (result) {
+                        RecoveryRequest.SentByServer -> {
+                            dialog.dismiss()
+                            showResetPasswordDialog(email, null)
+                        }
+                        is RecoveryRequest.SentLocally -> {
+                            dialog.dismiss()
+                            showResetPasswordDialog(email, result.code)
+                        }
+                        RecoveryRequest.AccountNotFound ->
+                            dialogBinding.forgotEmailLayout.error =
+                                getString(R.string.recovery_account_not_found)
+                        is RecoveryRequest.Failed -> showMessage(result.message)
+                    }
+                }
+            }
+        }
+        dialog.show()
+    }
+
+    /** Segundo paso de RF01.03: código recibido + contraseña nueva. */
+    private fun showResetPasswordDialog(email: String, fallbackCode: String?) {
+        val dialogBinding = DialogResetPasswordBinding.inflate(layoutInflater)
+        dialogBinding.resetFallbackText.isVisible = fallbackCode != null
+        if (fallbackCode != null) {
+            dialogBinding.resetFallbackText.text =
+                getString(R.string.recovery_fallback_code, fallbackCode)
+        }
+        dialogBinding.resetCodeInput.doAfterTextChanged { dialogBinding.resetCodeLayout.error = null }
+        dialogBinding.resetPasswordInput.doAfterTextChanged {
+            dialogBinding.resetPasswordLayout.error = null
+            dialogBinding.resetConfirmLayout.error = null
+        }
+        dialogBinding.resetConfirmInput.doAfterTextChanged { dialogBinding.resetConfirmLayout.error = null }
+
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.recovery_reset_title)
+            .setMessage(getString(R.string.recovery_reset_message, email))
+            .setView(dialogBinding.root)
+            .setNegativeButton(R.string.action_cancel, null)
+            .setPositiveButton(R.string.recovery_reset_button, null)
+            .create()
+
+        dialog.setOnShowListener {
+            val positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            positive.setOnClickListener {
+                val code = dialogBinding.resetCodeInput.text?.toString()?.trim().orEmpty()
+                val password = dialogBinding.resetPasswordInput.text?.toString().orEmpty()
+                val confirmation = dialogBinding.resetConfirmInput.text?.toString().orEmpty()
+
+                dialogBinding.resetCodeLayout.error =
+                    if (PasswordResetPolicy.isWellFormed(code)) null
+                    else getString(R.string.recovery_code_invalid)
+                dialogBinding.resetPasswordLayout.error = passwordError(password)
+                dialogBinding.resetConfirmLayout.error = when {
+                    confirmation.isEmpty() -> getString(R.string.error_password_empty)
+                    confirmation != password -> getString(R.string.error_password_mismatch)
+                    else -> null
+                }
+                if (dialogBinding.resetCodeLayout.error != null ||
+                    dialogBinding.resetPasswordLayout.error != null ||
+                    dialogBinding.resetConfirmLayout.error != null
+                ) return@setOnClickListener
+
+                positive.isEnabled = false
+                lifecycleScope.launch {
+                    val result = try {
+                        withContext(Dispatchers.IO) { recovery.reset(email, code, password) }
+                    } catch (error: Exception) {
+                        ResetResult.Failed(error.message ?: getString(R.string.error_database))
+                    }
+                    if (isFinishing) return@launch
+                    when (result) {
+                        ResetResult.Success -> {
+                            dialog.dismiss()
+                            binding.emailInput.setText(email.lowercase())
+                            binding.passwordInput.setText("")
+                            showMessage(R.string.recovery_success)
+                        }
+                        ResetResult.InvalidCode -> {
+                            dialogBinding.resetCodeLayout.error = getString(R.string.recovery_code_wrong)
+                            positive.isEnabled = true
+                        }
+                        ResetResult.Expired -> {
+                            dialog.dismiss()
+                            showMessage(R.string.recovery_code_expired)
+                        }
+                        ResetResult.TooManyAttempts -> {
+                            dialog.dismiss()
+                            showMessage(R.string.recovery_too_many)
+                        }
+                        is ResetResult.Failed -> {
+                            showMessage(result.message)
+                            positive.isEnabled = true
+                        }
+                    }
                 }
             }
         }

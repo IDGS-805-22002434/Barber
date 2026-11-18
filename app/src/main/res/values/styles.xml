@@ -62,4 +62,9 @@
         <item name="cardCornerRadius">20dp</item>
         <item name="cardElevation">0dp</item>
     </style>
+
+    <style name="ShapeAppearanceOverlay.BarberManager.Circle" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
 </resources>

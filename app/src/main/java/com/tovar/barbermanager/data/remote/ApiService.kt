@@ -16,6 +16,20 @@ interface ApiService {
     @POST("api/auth/login")
     suspend fun login(@Body body: LoginRequest): AuthResponse
 
+    /** RF01.03: el servidor genera un código temporal y lo envía al correo registrado. */
+    @POST("api/auth/recuperar")
+    suspend fun recuperarPassword(@Body body: RecuperarRequest): MensajeResponse
+
+    @POST("api/auth/restablecer")
+    suspend fun restablecerPassword(@Body body: RestablecerRequest): MensajeResponse
+
+    /** RF07.04: asocia el token FCM del dispositivo con la cuenta. */
+    @POST("api/dispositivos")
+    suspend fun registrarDispositivo(@Body body: DispositivoRequest): MensajeResponse
+
+    @POST("api/dispositivos/baja")
+    suspend fun bajaDispositivo(@Body body: DispositivoRequest): MensajeResponse
+
     @GET("api/servicios")
     suspend fun servicios(): List<ServicioDto>
 

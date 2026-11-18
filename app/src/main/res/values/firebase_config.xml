@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Configuración de Firebase Cloud Messaging (RF07.04).
+  Copia estos cuatro valores de la consola de Firebase (Configuración del proyecto > General >
+  Tu app Android con el paquete com.tovar.barbermanager). Mientras digan REEMPLAZAR, FCM queda
+  desactivado y la app usa solo notificaciones locales. Si prefieres google-services.json,
+  agrégalo en app/ y aplica el plugin com.google.gms.google-services; estos valores se ignoran.
+-->
+<resources>
+    <string name="firebase_api_key" translatable="false">REEMPLAZAR</string>
+    <string name="firebase_app_id" translatable="false">REEMPLAZAR</string>
+    <string name="firebase_project_id" translatable="false">REEMPLAZAR</string>
+    <string name="firebase_sender_id" translatable="false">REEMPLAZAR</string>
+</resources>

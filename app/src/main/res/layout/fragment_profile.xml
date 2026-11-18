@@ -56,6 +56,13 @@
         </LinearLayout>
     </LinearLayout>
 
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="12dp"
+        android:importantForAccessibility="no"
+        android:scaleType="fitXY"
+        android:src="@drawable/pole_ribbon" />
+
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -89,6 +96,44 @@
                 android:visibility="gone"
                 tools:text="No hay conexión con el servidor."
                 tools:visibility="visible" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/avatar_image"
+                    android:layout_width="112dp"
+                    android:layout_height="112dp"
+                    android:background="@color/icon_chip"
+                    android:contentDescription="@string/cd_profile_photo"
+                    android:padding="28dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_person"
+                    app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.BarberManager.Circle"
+                    app:strokeColor="@color/outline"
+                    app:strokeWidth="2dp"
+                    app:tint="@color/text_secondary" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/avatar_change_button"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/profile_photo_change" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/avatar_remove_button"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/profile_photo_remove"
+                    android:visibility="gone" />
+            </LinearLayout>
 
             <TextView
                 android:layout_width="wrap_content"
@@ -141,6 +186,12 @@
                     android:inputType="textEmailAddress" />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <LinearLayout
+                android:id="@+id/server_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -164,6 +215,7 @@
                     android:inputType="textUri"
                     android:text="http://10.0.2.2:8080/" />
             </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/save_button"

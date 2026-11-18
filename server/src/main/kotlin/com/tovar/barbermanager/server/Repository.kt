@@ -348,6 +348,74 @@ object Repository {
         )
     )
 
+    // ------------------------------------------------------------- recuperación de contraseña (RF01.03)
+
+    /** Un solo código vigente por usuario: se borran los anteriores antes de guardar el nuevo. */
+    fun guardarCodigoRecuperacion(usuarioId: Long, tokenHash: String, minutosVigencia: Long): Long {
+        Db.update("DELETE FROM recuperacion_contrasena WHERE usuario_id = ?", listOf(usuarioId))
+        return Db.insert(
+            "INSERT INTO recuperacion_contrasena (usuario_id, token_hash, expira_en) " +
+                "VALUES (?, ?, DATE_ADD(NOW(), INTERVAL ? MINUTE))",
+            listOf(usuarioId, tokenHash, minutosVigencia)
+        )
+    }
+
+    fun codigoRecuperacionVigente(usuarioId: Long, tokenHash: String): Long? = Db.one(
+        "SELECT id FROM recuperacion_contrasena WHERE usuario_id = ? AND token_hash = ? " +
+            "AND utilizado_en IS NULL AND expira_en > NOW()",
+        listOf(usuarioId, tokenHash)
+    ) { it.getLong(1) }
+
+    fun marcarCodigoUsado(id: Long): Int = Db.update(
+        "UPDATE recuperacion_contrasena SET utilizado_en = NOW() WHERE id = ?",
+        listOf(id)
+    )
+
+    // ------------------------------------------------------------- dispositivos FCM (RF07.04)
+
+    fun registrarDispositivo(usuarioId: Long, tokenFcm: String): Int = Db.update(
+        "INSERT INTO dispositivos_fcm (usuario_id, token_fcm, activo) VALUES (?, ?, 1) " +
+            "ON DUPLICATE KEY UPDATE usuario_id = VALUES(usuario_id), activo = 1",
+        listOf(usuarioId, tokenFcm)
+    )
+
+    fun bajaDispositivo(usuarioId: Long, tokenFcm: String): Int = Db.update(
+        "UPDATE dispositivos_fcm SET activo = 0 WHERE token_fcm = ? AND usuario_id = ?",
+        listOf(tokenFcm, usuarioId)
+    )
+
+    // ------------------------------------------------------------- notificaciones (RF07, RF07.03)
+
+    fun insertarNotificacion(
+        usuarioId: Long,
+        citaId: Long?,
+        titulo: String,
+        mensaje: String,
+        tipo: String
+    ): Long = Db.insert(
+        "INSERT INTO notificaciones (usuario_id, cita_id, titulo, mensaje, tipo) VALUES (?, ?, ?, ?, ?)",
+        listOf(usuarioId, citaId, titulo, mensaje, tipo)
+    )
+
+    /** [usuarioId] null devuelve todas (administrador). */
+    fun notificaciones(usuarioId: Long?): List<NotificacionDto> = Db.list(
+        "SELECT id, usuario_id, cita_id, titulo, mensaje, tipo, estado, creado_en FROM notificaciones " +
+            (if (usuarioId != null) "WHERE usuario_id = ? " else "") +
+            "ORDER BY creado_en DESC, id DESC LIMIT 200",
+        if (usuarioId != null) listOf(usuarioId) else emptyList()
+    ) { rs ->
+        NotificacionDto(
+            id = rs.getLong("id"),
+            usuarioId = rs.getLong("usuario_id"),
+            citaId = rs.getLong("cita_id").takeUnless { rs.wasNull() },
+            titulo = rs.getString("titulo"),
+            mensaje = rs.getString("mensaje"),
+            tipo = rs.getString("tipo"),
+            estado = rs.getString("estado"),
+            creadaEn = rs.getTimestamp("creado_en").toLocalDateTime().toString()
+        )
+    }
+
     /** Clave duplicada (MySQL 1062): se traduce a HTTP 409 en las rutas. */
     fun esDuplicado(error: SQLException): Boolean =
         error.errorCode == 1062 || "23000" == error.sqlState

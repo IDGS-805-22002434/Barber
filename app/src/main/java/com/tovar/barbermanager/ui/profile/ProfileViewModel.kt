@@ -4,7 +4,10 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.tovar.barbermanager.R
+import com.tovar.barbermanager.data.AuthRepository
 import com.tovar.barbermanager.data.SessionManager
+import com.tovar.barbermanager.data.local.AppDatabase
+import com.tovar.barbermanager.data.local.Appointment
 import com.tovar.barbermanager.data.remote.ApiClient
 import com.tovar.barbermanager.data.remote.ApiException
 import com.tovar.barbermanager.data.remote.HistorialItemDto
@@ -38,6 +41,7 @@ data class ProfileUiState(
 class ProfileViewModel(application: Application) : AndroidViewModel(application) {
 
     private val session = SessionManager(application)
+    private val database = AppDatabase.getInstance(application)
 
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
@@ -67,14 +71,18 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
             _uiState.update {
                 it.copy(
                     loading = false,
-                    historialLoading = false,
-                    historialEmpty = true,
-                    historial = emptyList(),
+                    historialLoading = true,
                     correo = session.userEmail.orEmpty(),
                     servidorUrl = servidor,
                     isServerSession = false,
                     error = null
                 )
+            }
+            viewModelScope.launch {
+                val local = localHistory()
+                _uiState.update {
+                    it.copy(historialLoading = false, historial = local, historialEmpty = local.isEmpty())
+                }
             }
             return
         }
@@ -110,9 +118,28 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    /** Servicios ya atendidos de las citas guardadas en el dispositivo (RF08). */
+    private suspend fun localHistory(): List<HistorialItemDto> {
+        val email = session.currentEmail?.takeIf { it.isNotBlank() } ?: return emptyList()
+        return database.appointmentDao().completedForUser(email).map { it.toHistoryItem() }
+    }
+
+    private fun Appointment.toHistoryItem() = HistorialItemDto(
+        fecha = date,
+        horaInicio = time,
+        nombreServicio = serviceName,
+        precioCentavos = priceCents - discountCents,
+        barberoNombre = barberName
+    )
+
     private suspend fun cargarHistorial() {
         try {
-            val historial = ApiClient.call { ApiClient.service().historial() }
+            val remote = ApiClient.call { ApiClient.service().historial() }
+            // Las citas se agendan en el dispositivo: se unen con las del servidor sin repetir.
+            val local = localHistory()
+            val historial = (remote + local.filter { l ->
+                remote.none { it.fecha == l.fecha && it.horaInicio == l.horaInicio }
+            }).sortedWith(compareByDescending<HistorialItemDto> { it.fecha }.thenByDescending { it.horaInicio })
             _uiState.update {
                 it.copy(
                     historialLoading = false,
@@ -121,7 +148,10 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 )
             }
         } catch (error: ApiException) {
-            _uiState.update { it.copy(historialLoading = false, historialEmpty = true) }
+            val local = localHistory()
+            _uiState.update {
+                it.copy(historialLoading = false, historial = local, historialEmpty = local.isEmpty())
+            }
         }
     }
 
@@ -200,10 +230,6 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
 
     fun cambiarPassword(actual: String, nueva: String, confirmacion: String): Boolean {
         val context = getApplication<Application>()
-        if (!session.isServerSession) {
-            _events.tryEmit(context.getString(R.string.profile_password_server_only))
-            return true
-        }
         val error = when {
             actual.isBlank() -> context.getString(R.string.error_password_empty)
             nueva.length < 6 -> context.getString(R.string.error_password_short, 6)
@@ -213,6 +239,16 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         if (error != null) {
             _events.tryEmit(error)
             return false
+        }
+        if (!session.isServerSession) {
+            val email = session.currentEmail.orEmpty()
+            viewModelScope.launch {
+                val changed = AuthRepository(database.userDao()).changeLocalPassword(email, actual, nueva)
+                _events.tryEmit(
+                    context.getString(if (changed) R.string.password_updated else R.string.error_password_wrong)
+                )
+            }
+            return true
         }
         viewModelScope.launch {
             try {

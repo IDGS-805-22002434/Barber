@@ -47,6 +47,12 @@ class SchedulesAdapter(
             binding.scheduleStatus.setText(
                 if (schedule.active) R.string.schedule_active else R.string.schedule_inactive
             )
+            binding.scheduleStatus.setBackgroundResource(
+                if (schedule.active) R.drawable.bg_status_confirmed else R.drawable.bg_chip
+            )
+            binding.scheduleStatus.setTextColor(
+                android.graphics.Color.parseColor(if (schedule.active) "#2E7D32" else "#5A667A")
+            )
             binding.scheduleToggleButton.setText(
                 if (schedule.active) R.string.schedule_deactivate else R.string.schedule_activate
             )

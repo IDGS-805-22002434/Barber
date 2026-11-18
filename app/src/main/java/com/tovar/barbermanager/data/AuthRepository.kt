@@ -138,6 +138,23 @@ class AuthRepository(private val userDao: UserDao) {
     suspend fun accountExists(email: String): Boolean =
         userDao.getByEmail(normalizeEmail(email)) != null
 
+    /** Cambia la contraseña de una cuenta local (recuperación sin conexión). */
+    suspend fun updateLocalPassword(email: String, newPassword: String): Boolean {
+        val credentials = PasswordHasher.create(newPassword)
+        return userDao.updatePassword(
+            normalizeEmail(email),
+            credentials.encodedHash,
+            credentials.encodedSalt
+        ) > 0
+    }
+
+    /** Verifica la contraseña actual de una cuenta local y guarda la nueva (Perfil). */
+    suspend fun changeLocalPassword(email: String, current: String, newPassword: String): Boolean {
+        val account = userDao.getByEmail(normalizeEmail(email)) ?: return false
+        if (!PasswordHasher.verify(current, account.passwordSalt, account.passwordHash)) return false
+        return updateLocalPassword(email, newPassword)
+    }
+
     private fun normalizeEmail(email: String): String = email.trim().lowercase()
 
     private fun UsuarioDto.toLocalAccount() = UserAccount(

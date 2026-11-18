@@ -7,7 +7,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -57,6 +60,9 @@ class SchedulesFragment : Fragment() {
             return
         }
 
+        applyInsets()
+        binding.backButton.setOnClickListener { findNavController().navigateUp() }
+
         adapter = SchedulesAdapter(
             onEdit = { showScheduleEditor(it) },
             onToggleActive = { toggleSchedule(it) }
@@ -78,6 +84,16 @@ class SchedulesFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    private fun applyInsets() {
+        val headerBaseTop = binding.schedulesHeader.paddingTop
+        ViewCompat.setOnApplyWindowInsetsListener(binding.schedulesRoot) { root, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            binding.schedulesHeader.updatePadding(top = headerBaseTop + bars.top)
+            root.updatePadding(left = bars.left, right = bars.right, bottom = bars.bottom)
+            insets
+        }
     }
 
     private fun showScheduleEditor(item: BarberScheduleWithName?) {

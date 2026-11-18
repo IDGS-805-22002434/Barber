@@ -115,3 +115,12 @@ data class HistorialItemDto(
     val precioCentavos: Long,
     val barberoNombre: String
 )
+
+@JsonClass(generateAdapter = true)
+data class RecuperarRequest(val correo: String)
+
+@JsonClass(generateAdapter = true)
+data class RestablecerRequest(val correo: String, val codigo: String, val nuevaPassword: String)
+
+@JsonClass(generateAdapter = true)
+data class DispositivoRequest(val tokenFcm: String)

@@ -40,4 +40,18 @@ interface AppointmentDao {
 
     @Query("SELECT * FROM appointment_history WHERE appointmentId = :appointmentId ORDER BY createdAt, id")
     suspend fun history(appointmentId: Long): List<AppointmentHistory>
+
+    /** Citas atendidas de un cliente: su historial de servicios recibidos (RF08). */
+    @Query(
+        "SELECT * FROM appointments WHERE userEmail = :email COLLATE NOCASE " +
+            "AND status = 'COMPLETADA' ORDER BY date DESC, time DESC"
+    )
+    suspend fun completedForUser(email: String): List<Appointment>
+
+    /** Citas confirmadas que aún no empiezan; sirven para reprogramar recordatorios. */
+    @Query(
+        "SELECT * FROM appointments WHERE userEmail = :email COLLATE NOCASE " +
+            "AND status = 'CONFIRMADA' AND (date || ' ' || time) >= :nowKey ORDER BY date, time"
+    )
+    suspend fun upcomingForUser(email: String, nowKey: String): List<Appointment>
 }

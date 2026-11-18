@@ -8,6 +8,7 @@ import com.tovar.barbermanager.data.local.AppointmentStatus
 import com.tovar.barbermanager.data.local.Coupon
 import com.tovar.barbermanager.data.local.CouponRedemption
 import com.tovar.barbermanager.data.local.HistoryAction
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 
 /** Resultado de agendar o reprogramar. */
@@ -30,7 +31,11 @@ sealed interface BookingResult {
  * se revisa que el horario siga libre y se guarda en un solo paso, así dos usuarios
  * no pueden reservar el mismo horario del mismo barbero (RNF08).
  */
-class AppointmentRepository(private val db: AppDatabase) {
+class AppointmentRepository(
+    private val db: AppDatabase,
+    /** Avisos opcionales (notificaciones y recordatorios) tras guardar un cambio. */
+    private val events: AppointmentEvents? = null
+) {
 
     private val appointments = db.appointmentDao()
     private val schedules = db.scheduleDao()
@@ -51,6 +56,18 @@ class AppointmentRepository(private val db: AppDatabase) {
         appointment: Appointment,
         couponCode: String? = null,
         userId: Long = 0L
+    ): BookingResult {
+        val result = bookInTransaction(appointment, couponCode, userId)
+        if (result is BookingResult.Success) {
+            notifyEvent(result.appointmentId) { events?.onBooked(it) }
+        }
+        return result
+    }
+
+    private suspend fun bookInTransaction(
+        appointment: Appointment,
+        couponCode: String?,
+        userId: Long
     ): BookingResult = db.withTransaction {
         if (appointment.time !in computeFreeSlots(appointment.barberId, appointment.date)) {
             return@withTransaction BookingResult.SlotUnavailable
@@ -88,6 +105,19 @@ class AppointmentRepository(private val db: AppDatabase) {
         newDate: String,
         newTime: String,
         isAdmin: Boolean
+    ): BookingResult {
+        val result = rescheduleInTransaction(id, newDate, newTime, isAdmin)
+        if (result is BookingResult.Success) {
+            notifyEvent(id) { events?.onRescheduled(it) }
+        }
+        return result
+    }
+
+    private suspend fun rescheduleInTransaction(
+        id: Long,
+        newDate: String,
+        newTime: String,
+        isAdmin: Boolean
     ): BookingResult = db.withTransaction {
         val current = appointments.getById(id)
             ?: return@withTransaction BookingResult.NotAllowed
@@ -113,7 +143,13 @@ class AppointmentRepository(private val db: AppDatabase) {
     }
 
     /** Cancela y libera el horario (RF06.04, RF06.05). Devuelve false si no se permite. */
-    suspend fun cancel(id: Long, isAdmin: Boolean): Boolean = db.withTransaction {
+    suspend fun cancel(id: Long, isAdmin: Boolean): Boolean {
+        val cancelled = cancelInTransaction(id, isAdmin)
+        if (cancelled) notifyEvent(id) { events?.onCancelled(it) }
+        return cancelled
+    }
+
+    private suspend fun cancelInTransaction(id: Long, isAdmin: Boolean): Boolean = db.withTransaction {
         val current = appointments.getById(id) ?: return@withTransaction false
         val allowed = Scheduling.canChange(
             current.status, current.date, current.time, System.currentTimeMillis(), isAdmin
@@ -134,11 +170,29 @@ class AppointmentRepository(private val db: AppDatabase) {
     }
 
     /** Marca una cita como atendida (solo administrador). */
-    suspend fun complete(id: Long): Boolean = db.withTransaction {
+    suspend fun complete(id: Long): Boolean {
+        val completed = completeInTransaction(id)
+        if (completed) notifyEvent(id) { events?.onCompleted(it) }
+        return completed
+    }
+
+    private suspend fun completeInTransaction(id: Long): Boolean = db.withTransaction {
         val current = appointments.getById(id) ?: return@withTransaction false
         if (current.status != AppointmentStatus.CONFIRMADA) return@withTransaction false
         appointments.updateStatus(id, AppointmentStatus.COMPLETADA)
         true
+    }
+
+    /** Un fallo al avisar (notificación o recordatorio) nunca debe deshacer la cita ya guardada. */
+    private suspend fun notifyEvent(id: Long, block: suspend (Appointment) -> Unit) {
+        val current = appointments.getById(id) ?: return
+        try {
+            block(current)
+        } catch (error: CancellationException) {
+            throw error
+        } catch (_: Exception) {
+            // La cita ya está guardada; el aviso se omite.
+        }
     }
 
     private suspend fun computeFreeSlots(barberId: Long, date: String): List<String> {

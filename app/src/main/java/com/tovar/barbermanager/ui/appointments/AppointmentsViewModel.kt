@@ -7,6 +7,7 @@ import com.tovar.barbermanager.data.AppointmentRepository
 import com.tovar.barbermanager.data.Dates
 import com.tovar.barbermanager.data.SessionManager
 import com.tovar.barbermanager.data.local.AppDatabase
+import com.tovar.barbermanager.data.notifications.AppointmentNotifier
 import com.tovar.barbermanager.data.local.Appointment
 import com.tovar.barbermanager.data.local.AppointmentStatus
 import kotlinx.coroutines.channels.Channel
@@ -27,7 +28,10 @@ data class AppointmentsUiState(
 /** Lista de citas (cliente: las suyas; admin: toda la agenda) con cancelar/reprogramar. */
 class AppointmentsViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repository = AppointmentRepository(AppDatabase.getInstance(application))
+    private val repository = AppointmentRepository(
+        AppDatabase.getInstance(application),
+        AppointmentNotifier(application)
+    )
     private val session = SessionManager(application)
 
     val isAdmin: Boolean = session.isAdmin

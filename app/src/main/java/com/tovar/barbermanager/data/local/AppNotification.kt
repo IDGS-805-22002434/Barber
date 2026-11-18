@@ -1,36 +1,45 @@
 package com.tovar.barbermanager.data.local
 
 import androidx.room.Entity
-import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
+/** Estados de entrega de una notificación (RF07.03). */
+object NotificationStatus {
+    /** Generada, pero aún no mostrada en el dispositivo del destinatario. */
+    const val PENDIENTE = "PENDIENTE"
+    const val ENVIADA = "ENVIADA"
+
+    /** No se pudo entregar (permiso de notificaciones denegado o canal desactivado). */
+    const val FALLIDA = "FALLIDA"
+}
+
+object NotificationType {
+    const val CONFIRMACION = "CONFIRMACION"
+    const val REPROGRAMACION = "REPROGRAMACION"
+    const val CANCELACION = "CANCELACION"
+    const val RECORDATORIO = "RECORDATORIO"
+    const val COMPLETADA = "COMPLETADA"
+    const val SISTEMA = "SISTEMA"
+}
+
+/**
+ * Registro de cada notificación generada y su estado (RF07.03).
+ * El destinatario se identifica por correo, igual que las citas (RNF07).
+ */
 @Entity(
     tableName = "app_notifications",
-    foreignKeys = [
-        ForeignKey(
-            entity = UserAccount::class,
-            parentColumns = ["id"],
-            childColumns = ["userId"],
-            onDelete = ForeignKey.CASCADE
-        ),
-        ForeignKey(
-            entity = Appointment::class,
-            parentColumns = ["id"],
-            childColumns = ["appointmentId"],
-            onDelete = ForeignKey.SET_NULL
-        )
-    ],
-    indices = [Index(value = ["userId"]), Index(value = ["appointmentId"])]
+    indices = [Index(value = ["userEmail"]), Index(value = ["appointmentId"])]
 )
 data class AppNotification(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
-    val userId: Long,
+    val userEmail: String,
     val appointmentId: Long? = null,
     val title: String,
     val message: String,
     val type: String,
-    /** PENDIENTE, ENVIADA o FALLIDA. */
-    val status: String = "PENDIENTE",
-    val createdAt: Long = System.currentTimeMillis()
+    val status: String = NotificationStatus.PENDIENTE,
+    val isRead: Boolean = false,
+    val createdAt: Long = System.currentTimeMillis(),
+    val sentAt: Long? = null
 )

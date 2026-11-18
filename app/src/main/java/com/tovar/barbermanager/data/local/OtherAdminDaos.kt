@@ -34,6 +34,9 @@ interface PromotionDao {
 
     @Query("SELECT COUNT(*) FROM promotions")
     suspend fun count(): Int
+
+    @Query("SELECT * FROM promotions WHERE id = :id")
+    suspend fun getById(id: Long): Promotion?
 }
 
 @Dao
@@ -42,6 +45,10 @@ interface CouponDao {
     fun observeAll(): Flow<List<Coupon>>
     @Query("SELECT * FROM coupons WHERE code = :code LIMIT 1")
     suspend fun getByCode(code: String): Coupon?
+    @Query("SELECT * FROM coupons WHERE id = :id")
+    suspend fun getById(id: Long): Coupon?
+    @Query("SELECT * FROM coupons WHERE promotionId = :promotionId ORDER BY id LIMIT 1")
+    suspend fun getByPromotion(promotionId: Long): Coupon?
     @Insert suspend fun insert(coupon: Coupon): Long
     @Update suspend fun update(coupon: Coupon)
     @Query("UPDATE coupons SET active = :active WHERE id = :id")
@@ -59,23 +66,25 @@ interface CouponRedemptionDao {
     @Insert suspend fun insert(redemption: CouponRedemption): Long
     @Query("SELECT COUNT(*) FROM coupon_redemptions WHERE couponId = :couponId AND userId = :userId")
     suspend fun countForUser(couponId: Long, userId: Long): Int
-}
 
-@Dao
-interface AppNotificationDao {
-    @Query("SELECT * FROM app_notifications WHERE userId = :userId ORDER BY createdAt DESC")
-    fun observeForUser(userId: Long): Flow<List<AppNotification>>
-    @Insert suspend fun insert(notification: AppNotification): Long
-    @Query("UPDATE app_notifications SET status = :status WHERE id = :id")
-    suspend fun updateStatus(id: Long, status: String)
-}
+    /** Todos los cupones aplicados (administrador). */
+    @Query(
+        "SELECT r.*, c.code AS couponCode, a.clientName AS clientName " +
+            "FROM coupon_redemptions r " +
+            "INNER JOIN coupons c ON c.id = r.couponId " +
+            "LEFT JOIN appointments a ON a.id = r.appointmentId " +
+            "ORDER BY r.appliedAt DESC"
+    )
+    fun observeAllUsage(): Flow<List<CouponUsage>>
 
-@Dao
-interface DeviceRegistrationDao {
-    @Query("SELECT * FROM device_registrations WHERE userId = :userId AND active = 1")
-    fun observeActiveForUser(userId: Long): Flow<List<DeviceRegistration>>
-    @Insert suspend fun insert(registration: DeviceRegistration): Long
-    @Update suspend fun update(registration: DeviceRegistration)
-    @Query("UPDATE device_registrations SET active = :active WHERE fcmToken = :token")
-    suspend fun setTokenActive(token: String, active: Boolean)
+    /** Cupones aplicados por un usuario (cliente). */
+    @Query(
+        "SELECT r.*, c.code AS couponCode, a.clientName AS clientName " +
+            "FROM coupon_redemptions r " +
+            "INNER JOIN coupons c ON c.id = r.couponId " +
+            "LEFT JOIN appointments a ON a.id = r.appointmentId " +
+            "WHERE r.userId = :userId " +
+            "ORDER BY r.appliedAt DESC"
+    )
+    fun observeUsageForUser(userId: Long): Flow<List<CouponUsage>>
 }

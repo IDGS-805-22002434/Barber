@@ -6,8 +6,6 @@
    See https://developer.android.com/about/versions/12/backup-restore
 -->
 <full-backup-content>
-    <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+    <!-- Los códigos de recuperación de contraseña no se respaldan en la nube. -->
+    <exclude domain="sharedpref" path="barbermanager_password_reset.xml"/>
 </full-backup-content>

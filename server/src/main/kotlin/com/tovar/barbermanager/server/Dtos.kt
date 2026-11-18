@@ -140,3 +140,30 @@ data class HistorialItemDto(
     val precioCentavos: Long,
     val barberoNombre: String
 )
+
+// ---------------------------------------------------------------- recuperación y notificaciones
+
+@Serializable
+data class RecuperarRequest(val correo: String = "")
+
+@Serializable
+data class RestablecerRequest(
+    val correo: String = "",
+    val codigo: String = "",
+    val nuevaPassword: String = ""
+)
+
+@Serializable
+data class DispositivoRequest(val tokenFcm: String = "")
+
+@Serializable
+data class NotificacionDto(
+    val id: Long,
+    val usuarioId: Long,
+    val citaId: Long? = null,
+    val titulo: String,
+    val mensaje: String,
+    val tipo: String,
+    val estado: String,
+    val creadaEn: String
+)

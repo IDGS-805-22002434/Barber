@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Administración de promociones y cupones (RF08) -->
+    <string name="promo_add">Agregar promoción</string>
+    <string name="promo_form_new_title">Nueva promoción</string>
+    <string name="promo_form_edit_title">Editar promoción</string>
+    <string name="promo_hint_title">Título</string>
+    <string name="promo_hint_description">Descripción</string>
+    <string name="promo_hint_conditions">Condiciones (opcional)</string>
+    <string name="promo_hint_starts">Inicio de vigencia</string>
+    <string name="promo_hint_ends">Fin de vigencia</string>
+    <string name="promo_active_label">Promoción activa (visible para los clientes)</string>
+    <string name="promo_coupon_section">Cupón</string>
+    <string name="promo_coupon_section_hint">Déjalo vacío si la promoción no lleva cupón.</string>
+    <string name="promo_hint_code">Código del cupón</string>
+    <string name="promo_hint_type">Tipo de descuento</string>
+    <string name="promo_hint_value">Valor del descuento</string>
+    <string name="promo_hint_category">Aplica a la categoría</string>
+    <string name="promo_hint_min_price">Precio mínimo del servicio (opcional)</string>
+    <string name="promo_hint_max_uses">Límite de usos (opcional)</string>
+    <string name="promo_type_percent">Porcentaje (%)</string>
+    <string name="promo_type_amount">Monto fijo ($)</string>
+    <string name="promo_category_all">Todas las categorías</string>
+    <string name="promo_save">Guardar promoción</string>
+    <string name="promo_saved">Promoción guardada.</string>
+    <string name="promo_status_active">Activa</string>
+    <string name="promo_status_inactive">Inactiva</string>
+    <string name="promo_status_expired">Vencida</string>
+    <string name="promo_status_scheduled">Programada</string>
+    <string name="promo_usage_limited">Usos: %1$d de %2$d</string>
+    <string name="promo_usage_unlimited">Usos: %1$d</string>
+    <string name="promo_usage_button">Cupones aplicados</string>
+    <string name="promo_error_title">Escribe el título de la promoción.</string>
+    <string name="promo_error_description">Escribe la descripción.</string>
+    <string name="promo_error_dates">Elige la fecha de inicio y de fin.</string>
+    <string name="promo_error_dates_order">El fin no puede ser anterior al inicio.</string>
+    <string name="promo_error_code">Usa de 4 a 20 letras o números, sin espacios.</string>
+    <string name="promo_error_code_taken">Ya existe un cupón con ese código.</string>
+    <string name="promo_error_value_percent">Escribe un porcentaje entre 1 y 100.</string>
+    <string name="promo_error_value_amount">Escribe un monto válido, por ejemplo 50.</string>
+    <string name="promo_error_min_price">Escribe un precio válido o déjalo vacío.</string>
+    <string name="promo_error_max_uses">Escribe un número mayor que cero o déjalo vacío.</string>
+
+    <string name="usage_title">Cupones aplicados</string>
+    <string name="usage_subtitle">Cupones usados por los clientes</string>
+    <string name="usage_subtitle_client">Cupones que ya usaste</string>
+    <string name="usage_empty">Todavía no se ha aplicado ningún cupón.</string>
+    <string name="usage_item_title">%1$s · -%2$s</string>
+    <string name="usage_item_client">Cliente: %1$s</string>
+    <string name="usage_item_folio">Cita #%1$d</string>
+</resources>

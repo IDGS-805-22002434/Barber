@@ -12,7 +12,10 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import java.sql.SQLException
 import java.time.LocalDate
+import java.security.MessageDigest
+import java.security.SecureRandom
 import java.time.LocalTime
+import java.util.concurrent.ConcurrentHashMap
 
 /** Error de negocio mapeado directamente a HTTP por [io.ktor.server.plugins.StatusPages]. */
 class ApiException(val status: HttpStatusCode, message: String) : Exception(message)
@@ -62,6 +65,7 @@ fun Route.apiRoutes(config: Config) {
         catalogRoutes(config)
         appointmentRoutes(config)
         profileRoutes(config)
+        notificationRoutes(config)
     }
 }
 
@@ -107,6 +111,101 @@ private fun Route.authRoutes(config: Config) {
             throw unauthorized("El correo o la contraseña son incorrectos.")
         }
         call.respond(AuthResponse(Tokens.issue(usuario.id, config.tokenSecret), usuario.toDto()))
+    }
+
+    post("/auth/recuperar") {
+        val body = call.receive<RecuperarRequest>()
+        val correo = body.correo.trim().lowercase()
+        if (!EMAIL_REGEX.matches(correo)) throw badRequest("Correo electrónico inválido.")
+        val usuario = Repository.usuarioPorCorreo(correo)
+        // La respuesta es la misma exista o no la cuenta, para no revelar qué correos están registrados.
+        if (usuario != null && usuario.activo) {
+            val codigo = "%06d".format(SecureRandom().nextInt(1_000_000))
+            Repository.guardarCodigoRecuperacion(usuario.id, hashCodigo(usuario.id, codigo), RESET_MINUTOS)
+            IntentosRecuperacion.reiniciar(correo)
+            CorreoRecuperacion.enviar(correo, codigo)
+        }
+        call.respond(MensajeResponse("Si el correo está registrado, recibirás un código de recuperación."))
+    }
+
+    post("/auth/restablecer") {
+        val body = call.receive<RestablecerRequest>()
+        val correo = body.correo.trim().lowercase()
+        if (body.nuevaPassword.length < 6) throw badRequest("La contraseña debe tener al menos 6 caracteres.")
+        val invalido = badRequest("El código es incorrecto o ya venció. Solicita uno nuevo.")
+        val usuario = Repository.usuarioPorCorreo(correo) ?: throw invalido
+        if (!IntentosRecuperacion.permitido(correo)) {
+            throw ApiException(HttpStatusCode.TooManyRequests, "Demasiados intentos. Solicita un código nuevo.")
+        }
+        val codigoId = Repository.codigoRecuperacionVigente(usuario.id, hashCodigo(usuario.id, body.codigo.trim()))
+        if (codigoId == null) {
+            IntentosRecuperacion.fallo(correo)
+            throw invalido
+        }
+        val credentials = Passwords.create(body.nuevaPassword)
+        Repository.actualizarPassword(usuario.id, credentials.encodedHash, credentials.encodedSalt)
+        Repository.marcarCodigoUsado(codigoId)
+        IntentosRecuperacion.reiniciar(correo)
+        call.respond(MensajeResponse("Contraseña actualizada."))
+    }
+}
+
+private const val RESET_MINUTOS = 15L
+
+private fun hashCodigo(usuarioId: Long, codigo: String): String =
+    MessageDigest.getInstance("SHA-256")
+        .digest("$usuarioId:$codigo".toByteArray(Charsets.UTF_8))
+        .joinToString("") { "%02x".format(it) }
+
+/** Máximo de intentos fallidos por correo mientras un código está vigente. */
+private object IntentosRecuperacion {
+    private const val MAXIMO = 5
+    private val fallos = ConcurrentHashMap<String, Int>()
+    fun permitido(correo: String) = (fallos[correo] ?: 0) < MAXIMO
+    fun fallo(correo: String) { fallos.merge(correo, 1, Int::plus) }
+    fun reiniciar(correo: String) { fallos.remove(correo) }
+}
+
+/**
+ * Entrega del código al correo registrado. No hay servidor SMTP configurado: el código se
+ * escribe en la consola del servidor. Para enviar correos reales, implementa aquí el envío.
+ */
+private object CorreoRecuperacion {
+    fun enviar(correo: String, codigo: String) {
+        println("[recuperación] Código para $correo: $codigo (vence en $RESET_MINUTOS minutos)")
+    }
+}
+
+// ---------------------------------------------------------------- notificaciones y dispositivos
+
+private fun notificar(clienteId: Long, citaId: Long, tipo: String, titulo: String, mensaje: String) {
+    try {
+        Repository.insertarNotificacion(clienteId, citaId, titulo, mensaje, tipo)
+    } catch (error: SQLException) {
+        // Un fallo al registrar el aviso no debe deshacer la operación de la cita.
+        System.err.println("No se pudo registrar la notificación: ${error.message}")
+    }
+}
+
+private fun Route.notificationRoutes(config: Config) {
+    post("/dispositivos") {
+        val user = call.requireUser(config)
+        val token = call.receive<DispositivoRequest>().tokenFcm.trim()
+        if (token.isEmpty() || token.length > 512) throw badRequest("Token de dispositivo inválido.")
+        Repository.registrarDispositivo(user.id, token)
+        call.respond(MensajeResponse("Dispositivo registrado."))
+    }
+
+    post("/dispositivos/baja") {
+        val user = call.requireUser(config)
+        val token = call.receive<DispositivoRequest>().tokenFcm.trim()
+        Repository.bajaDispositivo(user.id, token)
+        call.respond(MensajeResponse("Dispositivo dado de baja."))
+    }
+
+    get("/notificaciones") {
+        val user = call.requireUser(config)
+        call.respond(Repository.notificaciones(if (user.esAdmin) null else user.id))
     }
 }
 
@@ -211,7 +310,12 @@ private fun Route.appointmentRoutes(config: Config) {
             horaInicioNueva = LocalTime.parse(slot.horaInicio),
             horaFinNueva = LocalTime.parse(slot.horaFin)
         )
-        call.respond(HttpStatusCode.Created, Repository.citaPorId(citaId)!!)
+        val creada = Repository.citaPorId(citaId)!!
+        notificar(
+            user.id, citaId, "CONFIRMACION", "Cita confirmada",
+            "${creada.nombreServicio} con ${creada.barberoNombre} el ${creada.fecha} a las ${creada.horaInicio}."
+        )
+        call.respond(HttpStatusCode.Created, creada)
     }
 
     patch("/citas/{id}/estado") {
@@ -238,6 +342,17 @@ private fun Route.appointmentRoutes(config: Config) {
             horaFinAnterior = LocalTime.parse(cita.horaFin),
             motivo = body.motivo
         )
+        if (estado == "CANCELADA") {
+            notificar(
+                cita.clienteId, cita.id, "CANCELACION", "Cita cancelada",
+                "Se canceló tu cita de ${cita.nombreServicio} del ${cita.fecha} a las ${cita.horaInicio}."
+            )
+        } else if (estado == "COMPLETADA") {
+            notificar(
+                cita.clienteId, cita.id, "COMPLETADA", "Servicio registrado",
+                "Gracias por visitarnos. Tu servicio de ${cita.nombreServicio} quedó en tu historial."
+            )
+        }
         call.respond(Repository.citaPorId(cita.id)!!)
     }
 
@@ -272,6 +387,10 @@ private fun Route.appointmentRoutes(config: Config) {
             horaInicioNueva = LocalTime.parse(slot.horaInicio),
             horaFinNueva = LocalTime.parse(slot.horaFin),
             motivo = body.motivo
+        )
+        notificar(
+            cita.clienteId, cita.id, "REPROGRAMACION", "Cita reprogramada",
+            "Tu cita de ${cita.nombreServicio} ahora es el ${fecha} a las ${slot.horaInicio}."
         )
         call.respond(Repository.citaPorId(cita.id)!!)
     }

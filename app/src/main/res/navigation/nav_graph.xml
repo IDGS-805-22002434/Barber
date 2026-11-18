@@ -144,7 +144,26 @@
     <fragment
         android:id="@+id/promotionsFragment"
         android:name="com.tovar.barbermanager.ui.promotions.PromotionsFragment"
-        android:label="@string/promotions_title" />
+        android:label="@string/promotions_title">
+        <action
+            android:id="@+id/action_promotions_to_form"
+            app:destination="@id/promotionFormFragment" />
+        <action
+            android:id="@+id/action_promotions_to_usage"
+            app:destination="@id/couponUsageFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/promotionFormFragment"
+        android:name="com.tovar.barbermanager.ui.promotions.PromotionFormFragment"
+        android:label="@string/promo_form_new_title" />
+    <fragment
+        android:id="@+id/couponUsageFragment"
+        android:name="com.tovar.barbermanager.ui.promotions.CouponUsageFragment"
+        android:label="@string/usage_title" />
+    <fragment
+        android:id="@+id/notificationsFragment"
+        android:name="com.tovar.barbermanager.ui.notifications.NotificationsFragment"
+        android:label="@string/notifications_title" />
 
     <fragment
         android:id="@+id/profileFragment"

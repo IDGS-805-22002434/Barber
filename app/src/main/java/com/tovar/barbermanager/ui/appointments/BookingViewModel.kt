@@ -12,6 +12,7 @@ import com.tovar.barbermanager.data.PromotionRepository
 import com.tovar.barbermanager.data.ServiceRepository
 import com.tovar.barbermanager.data.SessionManager
 import com.tovar.barbermanager.data.local.AppDatabase
+import com.tovar.barbermanager.data.notifications.AppointmentNotifier
 import com.tovar.barbermanager.data.local.Appointment
 import com.tovar.barbermanager.data.local.Barber
 import com.tovar.barbermanager.data.local.Coupon
@@ -52,7 +53,7 @@ data class BookingState(
 class BookingViewModel(application: Application) : AndroidViewModel(application) {
 
     private val database = AppDatabase.getInstance(application)
-    private val repository = AppointmentRepository(database)
+    private val repository = AppointmentRepository(database, AppointmentNotifier(application))
     private val promotions = PromotionRepository(database)
     private val session = SessionManager(application)
 

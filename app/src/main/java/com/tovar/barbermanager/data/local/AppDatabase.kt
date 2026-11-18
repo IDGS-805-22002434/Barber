@@ -16,9 +16,10 @@ import kotlinx.coroutines.launch
         UserAccount::class, Service::class, Barber::class, Specialty::class, BarberSpecialty::class,
         Appointment::class, AppointmentHistory::class,
         BarberSchedule::class, BlockedSlot::class,
-        Promotion::class, Coupon::class, CouponRedemption::class
+        Promotion::class, Coupon::class, CouponRedemption::class,
+        AppNotification::class, DeviceRegistration::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -37,6 +38,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun couponDao(): CouponDao
 
     abstract fun couponRedemptionDao(): CouponRedemptionDao
+
+    abstract fun notificationDao(): AppNotificationDao
+
+    abstract fun deviceDao(): DeviceRegistrationDao
 
     companion object {
         private const val DATABASE_NAME = "barbermanager.db"
@@ -150,6 +155,36 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Versión 7: notificaciones (RF07) y dispositivos FCM (RF07.04), y se quita la llave
+         * foránea de `coupon_redemptions.userId` hacia `users` (con sesión de servidor el id de
+         * usuario no existe en la tabla local y el canje de un cupón fallaba).
+         */
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Versiones anteriores pudieron dejar estas tablas con otras columnas; la app nunca
+                // las usó, así que se recrean limpias para que coincidan con el esquema actual.
+                db.execSQL("DROP TABLE IF EXISTS `app_notifications`")
+                db.execSQL("DROP TABLE IF EXISTS `device_registrations`")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `app_notifications` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `userEmail` TEXT NOT NULL, `appointmentId` INTEGER, `title` TEXT NOT NULL, `message` TEXT NOT NULL, `type` TEXT NOT NULL, `status` TEXT NOT NULL, `isRead` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `sentAt` INTEGER)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_app_notifications_userEmail` ON `app_notifications` (`userEmail`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_app_notifications_appointmentId` ON `app_notifications` (`appointmentId`)")
+
+                db.execSQL("CREATE TABLE IF NOT EXISTS `device_registrations` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `userEmail` TEXT NOT NULL, `fcmToken` TEXT NOT NULL, `active` INTEGER NOT NULL, `registeredAt` INTEGER NOT NULL)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_device_registrations_userEmail` ON `device_registrations` (`userEmail`)")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_device_registrations_fcmToken` ON `device_registrations` (`fcmToken`)")
+
+                db.execSQL("DROP TABLE IF EXISTS `coupon_redemptions_new`")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `coupon_redemptions_new` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `couponId` INTEGER NOT NULL, `userId` INTEGER NOT NULL, `appointmentId` INTEGER, `discountCents` INTEGER NOT NULL, `appliedAt` INTEGER NOT NULL, FOREIGN KEY(`couponId`) REFERENCES `coupons`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`appointmentId`) REFERENCES `appointments`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL)")
+                db.execSQL("INSERT INTO `coupon_redemptions_new` (`id`, `couponId`, `userId`, `appointmentId`, `discountCents`, `appliedAt`) SELECT `id`, `couponId`, `userId`, `appointmentId`, `discountCents`, `appliedAt` FROM `coupon_redemptions`")
+                db.execSQL("DROP TABLE `coupon_redemptions`")
+                db.execSQL("ALTER TABLE `coupon_redemptions_new` RENAME TO `coupon_redemptions`")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_coupon_redemptions_couponId` ON `coupon_redemptions` (`couponId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_coupon_redemptions_userId` ON `coupon_redemptions` (`userId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_coupon_redemptions_appointmentId` ON `coupon_redemptions` (`appointmentId`)")
+            }
+        }
+
         private fun createBookingTables(db: SupportSQLiteDatabase) {
             db.execSQL("DROP TABLE IF EXISTS `appointments`")
             db.execSQL(
@@ -228,11 +263,26 @@ abstract class AppDatabase : RoomDatabase() {
                 instance ?: build(context.applicationContext).also { instance = it }
             }
 
-        private fun build(context: Context): AppDatabase {
-            val db = Room.databaseBuilder(context, AppDatabase::class.java, DATABASE_NAME)
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_4, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+        private fun create(context: Context): AppDatabase =
+            Room.databaseBuilder(context, AppDatabase::class.java, DATABASE_NAME)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_4, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                 .fallbackToDestructiveMigration()
                 .build()
+
+        /**
+         * Abre la base una vez al arrancar. Si el archivo guardado en el dispositivo viene de una
+         * versión antigua con otra estructura y no se puede migrar, se borra y se crea de nuevo
+         * (vacía y con los datos iniciales) en lugar de cerrar la app.
+         */
+        private fun build(context: Context): AppDatabase {
+            var db = create(context)
+            try {
+                db.openHelper.writableDatabase
+            } catch (_: IllegalStateException) {
+                db = recreate(context, db)
+            } catch (_: android.database.sqlite.SQLiteException) {
+                db = recreate(context, db)
+            }
             CoroutineScope(Dispatchers.IO).launch {
                 if (db.serviceDao().count() == 0) {
                     db.serviceDao().insertAll(SeedData.services)
@@ -251,6 +301,16 @@ abstract class AppDatabase : RoomDatabase() {
                 }
             }
             return db
+        }
+
+        private fun recreate(context: Context, broken: AppDatabase): AppDatabase {
+            try {
+                broken.close()
+            } catch (_: Exception) {
+                // La base ya estaba en mal estado; se borra de todos modos.
+            }
+            context.deleteDatabase(DATABASE_NAME)
+            return create(context).also { it.openHelper.writableDatabase }
         }
 
         private suspend fun seedSpecialtyLinks(db: AppDatabase) {
